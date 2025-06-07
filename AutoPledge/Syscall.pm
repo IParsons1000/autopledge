@@ -46,7 +46,9 @@ sub detect {
     }
 
     # search for direct syscalls
-    my @dsys = grep { $mem{$_} =~ /syscall/ } keys %mem;
+    # int 0x80 is deprecated and syscall numbers are inconsistent for code old enough to use it
+    # sysenter throws illegal instruction on 64 bit
+    my @dsys = grep { $mem{$_} =~ /syscall/} keys %mem;
 
     # determine syscall number for each syscall
     my @calls;
@@ -61,6 +63,10 @@ sub detect {
             }
             elsif($mem{$addr} =~ /^xor\s*%.ax,%.ax/) {
                 push(@calls, 0);
+                break;
+            }
+            elsif($mem{$addr} =~ /,%.ax/) {
+                # something else is happening to the register (poisoned)
                 break;
             };
         } while(hex($addr) > hex($entry));
