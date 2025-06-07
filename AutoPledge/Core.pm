@@ -8,8 +8,6 @@ package AutoPledge::Core;
 
 use Exporter qw(import);
 
-our @EXPORT_OK;
-
 # define promises
 use constant {
     STDIO   => 1 << 0,

@@ -1,10 +1,10 @@
 #!/usr/bin/perl
 #
 # (c)2025 Ira Parsons
-# AutoPledge::Raw - detect direct linux syscalls from elf binary
+# AutoPledge::Syscall - detect direct linux syscalls from elf binary
 #
 
-package AutoPledge::Raw;
+package AutoPledge::Syscall;
 
 use AutoPledge::Core ':promises';
 
@@ -54,9 +54,13 @@ sub detect {
         my $addr = $string;
         do {
             $addr = sprintf("%x", hex($addr) - 1);
-            ### TODO: ONLY WORKS FOR MOV WITH A LITERAL ###
-            if($mem{$addr} =~ /\$(.*),%eax/){
+            ### Works for constant mov, xor zeroing ###
+            if($mem{$addr} =~ /^mov\s*\$(.*),%.ax/) {
                 push(@calls, hex($1));
+                break;
+            }
+            elsif($mem{$addr} =~ /^xor\s*%.ax,%.ax/) {
+                push(@calls, 0);
                 break;
             };
         } while(hex($addr) > hex($entry));
