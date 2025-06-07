@@ -16,6 +16,12 @@ my %funcs = (
 
 sub detect {
 
+    # determine if program is linked to glibc
+    my $yorn = `readelf -p .interp $_[0] 2>/dev/null`;
+    if ($yorn !~ /\.so/) {
+        return 0;
+    };
+
     # dump symbols in .dynsym section
     my $raw = `objdump -T $_[0]`;
 
@@ -26,7 +32,7 @@ sub detect {
     my @syms = ();
     foreach $string (@allsyms) {
         if ($string =~ /.*\(GLIBC.*\)\s*(.*)$/) {
-        push(@syms, $1);
+            push(@syms, $1);
         }
     }
 

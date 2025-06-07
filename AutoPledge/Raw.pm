@@ -36,14 +36,39 @@ sub detect {
 
     # format into address/instruction pairs
     my %mem;
+    my $entry = -1;
     foreach $string (@lines) {
-        $string =~ /^\s+(.*)\s+.*\s+(.*)$/;
+        $string =~ /^\s+(.*):.{23}(.*)$/;
         $mem{$1} = $2;
+        if ($entry == -1) {
+            $entry = $1;
+        };
     }
 
-print $_, "\n" for @lines;
+    # search for direct syscalls
+    my @dsys = grep { $mem{$_} =~ /syscall/ } keys %mem;
 
+    # determine syscall number for each syscall
+    my @calls;
+    foreach $string (@dsys) {
+        my $addr = $string;
+        do {
+            $addr = sprintf("%x", hex($addr) - 1);
+            ### TODO: ONLY WORKS FOR MOV WITH A LITERAL ###
+            if($mem{$addr} =~ /\$(.*),%eax/){
+                push(@calls, hex($1));
+                break;
+            };
+        } while(hex($addr) > hex($entry));
+    };
+
+    # assign promises by syscall number
     my $promises = 0;
+    foreach $num (@calls) {
+        if($num <= $#syscalls){
+            $promises |= $syscalls[$num];
+        };
+    };
 
     return $promises;
 
