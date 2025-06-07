@@ -52,7 +52,8 @@ sub stringify {
     push(@pretty, 'unix') if ($_[0] & UNIX);
     push(@pretty, 'dns') if ($_[0] & DNS);
     push(@pretty, 'proc') if ($_[0] & PROC);
-    push(@pretty, 'thread') if ($_[0] & THREAD);
+    # \/-- thread not supported by pledge.com implementation
+    # push(@pretty, 'thread') if ($_[0] & THREAD);
     push(@pretty, 'id') if ($_[0] & ID);
     push(@pretty, 'exec') if ($_[0] & EXEC);
     push(@pretty, 'tmppath') if ($_[0] & TMPPATH);
