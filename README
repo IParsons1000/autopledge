@@ -1,0 +1,4 @@
+auto-pledge
+===========
+
+automatically sandboxing syscalls available to at-risk programs
