@@ -6,12 +6,15 @@
 
 use AutoPledge::Core ':promises';
 use AutoPledge::Glibc;
+use AutoPledge::Raw;
 
 # process command line arguments
 my $program = $ARGV[0];
 
 # detect syscalls needed
-my $promises = AutoPledge::Glibc::detect($program);
+my $promises = 0;
+$promises |= AutoPledge::Glibc::detect($program); # glibc calls
+$promises |= AutoPledge::Raw::detect($program);   # direct syscalls
 
 # necessary to get working because pledge implementation is buggy:
 $promises |= RPATH;
