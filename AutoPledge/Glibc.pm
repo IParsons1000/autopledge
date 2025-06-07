@@ -11,7 +11,7 @@ use AutoPledge::Core ':promises';
 # enumerate promises by glibc function
 my %funcs = (
               printf => STDIO,
-              scanf  => STDIO
+              __isoc23_scanf  => STDIO | TTY
 );
 
 sub detect {
