@@ -16,6 +16,7 @@ if (@ARGV == 0) {
     HELP_MESSAGE();
 };
 my $program = $ARGV[0];
+@ARGV = @ARGV[ 1 .. $#ARGV ];
 
 # detect syscalls needed
 my $promises = 0;
@@ -29,7 +30,7 @@ $promises |= RPATH;
 my $arg = AutoPledge::Core::stringify($promises);
 
 # run linux pledge port without warnings (-q) and without unveiling (-V)
-exec('./pledge.com', '-qVp', $arg, $program);
+exec('./pledge.com', '-qVp', $arg, $program, @ARGV);
 
 exit;
 
