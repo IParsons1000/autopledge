@@ -5,7 +5,6 @@
  *
  */
 
-#include <stdio.h>
 #include <math.h>
 
 int main(int argc, char *argv[]){
@@ -16,8 +15,6 @@ int main(int argc, char *argv[]){
 		e *= e;
 	};
 
-	printf("%f\n", e);
-
-	return 0;
+	return (int)e;
 
 };

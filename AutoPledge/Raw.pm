@@ -22,18 +22,26 @@ sub detect {
     my @lines = split("\n", $raw);
 
     # filter out lint
+    splice(@lines, 0, 6);
     my $i = 0;
     foreach $string (@lines) {
         if($string =~ /^\s*$/) {
             splice(@lines, $i, 1);
-        }
-        elsif($string !~ /^\s/) {
+        };
+        if($string !~ /^\s/) {
 	    splice(@lines, $i, 1);
-        }
+        };
         $i++;
     }
 
-print $lines[0];
+    # format into address/instruction pairs
+    my %mem;
+    foreach $string (@lines) {
+        $string =~ /^\s+(.*)\s+.*\s+(.*)$/;
+        $mem{$1} = $2;
+    }
+
+print $_, "\n" for @lines;
 
     my $promises = 0;
 
