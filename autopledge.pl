@@ -10,9 +10,20 @@ use AutoPledge::Core ':promises';
 use AutoPledge::Glibc;
 use AutoPledge::Syscall;
 
+my $arg = 0;
+
 # process command line arguments
-getopts('') or die HELP_MESSAGE();
-if (@ARGV == 0) {
+getopts('hvp:', \my %opts) or die HELP_MESSAGE();
+if ($opts{h}) {
+    HELP_MESSAGE();
+}
+elsif ($opts{v}) {
+    VERSION_MESSAGE();
+}
+elsif ($opts{p} != 1) {
+    $arg = $opts{p};
+}
+elsif (@ARGV == 0) {
     HELP_MESSAGE();
 };
 my $program = $ARGV[0];
@@ -27,7 +38,13 @@ $promises |= AutoPledge::Syscall::detect($program);   # direct syscalls
 $promises |= RPATH;
 
 # convert promises into appropriate string for pledge
-my $arg = AutoPledge::Core::stringify($promises);
+if ($arg) {
+    $arg = $arg . ' ';
+}
+else {
+    $arg = '';
+};
+$arg = $arg . AutoPledge::Core::stringify($promises);
 
 # run linux pledge port without warnings (-q) and without unveiling (-V)
 exec('./pledge.com', '-qVp', $arg, $program, @ARGV);
@@ -35,7 +52,7 @@ exec('./pledge.com', '-qVp', $arg, $program, @ARGV);
 exit;
 
 sub HELP_MESSAGE {
-    print 'Usage: ./autopledge.pl </path/to/binary>' . "\n";
+    print 'Usage: ./autopledge.pl [ -hv ] [ -p <promises> ] </path/to/binary>' . "\n";
     exit;
     return;
 };
