@@ -16,9 +16,9 @@ extern "C" {
 
 typedef struct elf_s {
 	Elf64_Ehdr ehdr;   /* elf header */
-	Elf64_Phdr phdr;   /* program header */
+	Elf64_Phdr *phdr;  /* array ofprogram headers */
 	Elf64_Shdr *shdr;  /* array of section headers */
-	char **raw;        /* array of raw contents of sections */
+	char **secs;       /* array of raw contents of sections */
 } elf_t;
 
 elf_t *elf_load(char *file);

@@ -59,6 +59,7 @@ int main(int argc, char *argv[]){
 
 	/* cleanup */
 
+	free(bin->phdr);
 	free(bin);
 
 	return 0;

@@ -46,6 +46,31 @@ elf_t *elf_load(char *file){
 		return NULL;
 	};
 
+	/* load program header(s) */
+
+	if(!elf->ehdr.e_phnum){
+		elf->phdr = NULL;
+	}
+	else{
+		elf->phdr = malloc(elf->ehdr.e_phnum * elf->ehdr.e_phentsize);
+
+		if(lseek(fd, elf->ehdr.e_phoff, SEEK_SET) == -1){
+			printf("Error: unable to load program header(s) of file %s\n", file);
+			free(elf->phdr);
+			free(elf);
+			return NULL;
+		};
+
+		for(int i = 0; i < elf->ehdr.e_phnum; i++){
+			if(read(fd, &elf->phdr[i], sizeof(Elf64_Phdr)) != sizeof(Elf64_Phdr)){
+				printf("Error: unable to read program header(s) of file %s\n", file);
+				free(elf->phdr);
+				free(elf);
+				return NULL;
+			};
+		};
+	};
+
 	return elf;
 
 };
