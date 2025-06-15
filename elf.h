@@ -18,10 +18,12 @@ typedef struct elf_s {
 	Elf64_Ehdr ehdr;   /* elf header */
 	Elf64_Phdr *phdr;  /* array ofprogram headers */
 	Elf64_Shdr *shdr;  /* array of section headers */
+	char **segs;       /* array of raw contents of segments */
 	char **secs;       /* array of raw contents of sections */
 } elf_t;
 
 elf_t *elf_load(char *file);
+void elf_free(elf_t *elf);
 
 #ifdef __cplusplus
 }

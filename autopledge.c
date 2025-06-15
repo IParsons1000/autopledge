@@ -59,8 +59,7 @@ int main(int argc, char *argv[]){
 
 	/* cleanup */
 
-	free(bin->phdr);
-	free(bin);
+	elf_free(bin);
 
 	return 0;
 
