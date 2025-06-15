@@ -15,6 +15,7 @@ extern "C" {
 #include <elf.h>
 
 typedef struct elf_s {
+	char *name;        /* file name (for diagnostic messages) */
 	Elf64_Ehdr ehdr;   /* elf header */
 	Elf64_Phdr *phdr;  /* array ofprogram headers */
 	Elf64_Shdr *shdr;  /* array of section headers */
@@ -23,6 +24,7 @@ typedef struct elf_s {
 } elf_t;
 
 elf_t *elf_load(char *file);
+char **elf_get_dynsym(elf_t *elf);
 void elf_free(elf_t *elf);
 
 #ifdef __cplusplus

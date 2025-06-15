@@ -52,10 +52,13 @@ int main(int argc, char *argv[]){
 
 	elf_t *bin;
 	bin = elf_load(argv[optind]);
-
 	if(bin == NULL){
 		return 1;
 	};
+
+	/* detect syscalls */
+
+	elf_get_dynsym(bin);
 
 	/* cleanup */
 
