@@ -13,11 +13,14 @@ CFLAGS += -g
 
 all: autopledge
 
-autopledge: autopledge.o
-	$(CC) $(CFLAGS) -o autopledge autopledge.o
+autopledge: autopledge.o elf.o
+	$(CC) $(CFLAGS) -o autopledge autopledge.o elf.o
 
 autopledge.o: autopledge.c
 	$(CC) $(CFLAGS) -c autopledge.c
+
+elf.o: elf.c
+	$(CC) $(CFLAGS) -c elf.c
 
 clean:
 	-rm -f *.o

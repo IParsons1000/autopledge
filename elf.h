@@ -1,0 +1,30 @@
+/*
+ *
+ * (c)2025 Ira Parsons
+ * elf.h - elf parsing specification
+ *
+ */
+
+#ifndef _AUTOPLEDGE_ELF_H
+#define _AUTOPLEDGE_ELF_H
+
+#ifdef __cplusplus
+extern "C" {
+#endif /* __cplusplus */
+
+#include <elf.h>
+
+typedef struct elf_s {
+	Elf64_Ehdr ehdr;   /* elf header */
+	Elf64_Phdr phdr;   /* program header */
+	Elf64_Shdr *shdr;  /* array of section headers */
+	char **raw;        /* array of raw contents of sections */
+} elf_t;
+
+elf_t *elf_load(char *file);
+
+#ifdef __cplusplus
+}
+#endif /* __cplusplus */
+
+#endif /* _AUTOPLEDGE_ELF_H */

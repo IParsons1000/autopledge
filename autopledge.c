@@ -6,7 +6,9 @@
  */
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <unistd.h>
+#include "elf.h"
 
 #define NAME "autopledge"
 #define VERSION 0.1f
@@ -45,6 +47,19 @@ int main(int argc, char *argv[]){
 		printf("Error: cannot access file %s\n", argv[optind]);
 		return 1;
 	};
+
+	/* load program */
+
+	elf_t *bin;
+	bin = elf_load(argv[optind]);
+
+	if(bin == NULL){
+		return 1;
+	};
+
+	/* cleanup */
+
+	free(bin);
 
 	return 0;
 
