@@ -12,6 +12,11 @@
 extern "C" {
 #endif /* __cplusplus */
 
+typedef struct syscall_by_fun_s {
+	char *fun;
+	int *syscalls;
+} syscall_by_fun_t;
+
 extern int *syscalls; /* dynamic array of syscalls used by program */
 extern int numsyscalls; /* number of members of above array */
 

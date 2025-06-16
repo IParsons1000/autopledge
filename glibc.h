@@ -12,6 +12,10 @@
 extern "C" {
 #endif /* __cplusplus */
 
+#include "syscalls.h"
+
+#define GLIBC_NUM_FUNS 2
+
 char **glibc_get_syscalls(char **funs);
 
 #ifdef __cplusplus

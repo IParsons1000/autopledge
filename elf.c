@@ -272,12 +272,25 @@ char **elf_get_dynsym(elf_t *elf){
 	};
 
 	for(int j = 0; j < (int)(elf->shdr[dsymi].sh_size / elf->shdr[dsymi].sh_entsize); j++){
-		if(dynsym[j].st_info == STT_FUNC){
+		if(dynsym[j].st_info & STT_FUNC){
 			numsyms++;
 			syms = realloc(syms, numsyms * sizeof(char *));
+			if(syms == NULL){
+				printf("Error: realloc(syms, numsyms * sizeof(char *)) failed\n");
+				return NULL;
+			};
 			syms[numsyms-1] = &dynstr[dynsym[j].st_name];
 		};
 	};
+
+	/* add null terminating entry */
+
+	syms = realloc(syms, (numsyms + 1) * sizeof(char *));
+	if(syms == NULL){
+		printf("Error: realloc(syms, (numsyms + 1) * sizeof(char *)) failed\n");
+		return NULL;
+	};
+	syms[numsyms] = NULL;
 
 	if(!numsyms){
 		free(syms);
