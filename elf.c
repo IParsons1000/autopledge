@@ -272,7 +272,6 @@ char **elf_get_dynsym(elf_t *elf){
 	};
 
 	for(int j = 0; j < (int)(elf->shdr[dsymi].sh_size / elf->shdr[dsymi].sh_entsize); j++){
-printf("%d %ld %s\n", j, (unsigned long)dynsym[j].st_value, (char *)&dynstr[dynsym[j].st_name]);
 		if(dynsym[j].st_info == STT_FUNC){
 			numsyms++;
 			syms = realloc(syms, numsyms * sizeof(char *));

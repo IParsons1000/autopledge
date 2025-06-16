@@ -9,6 +9,8 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include "elf.h"
+#include "syscalls.h"
+#include "glibc.h"
 
 #define NAME "autopledge"
 #define VERSION 0.1f
@@ -59,6 +61,7 @@ int main(int argc, char *argv[]){
 	/* detect syscalls */
 
 	char **dynfuns = elf_get_dynsym(bin);
+	dynfuns = glibc_get_syscalls(dynfuns);
 
 	/* cleanup */
 
