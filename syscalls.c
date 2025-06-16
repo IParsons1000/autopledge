@@ -13,9 +13,10 @@
 int *syscalls = NULL;
 int numsyscalls = 0;
 
-void syscalls_add(int syscall);
+void _syscalls_add(int syscall);
+void syscalls_add(int *calls);
 
-void syscalls_add(int syscall){
+void _syscalls_add(int syscall){
 
 	if(syscalls == NULL){
 		syscalls = malloc(++numsyscalls * sizeof(int));
@@ -51,3 +52,17 @@ void syscalls_add(int syscall){
 	return;
 
 }
+
+void syscalls_add(int *calls){
+
+	/* add a -1 terminated list of syscalls to total */
+
+	if(calls != NULL){
+		for(int i = 0; calls[i] != -1; i++){
+			_syscalls_add(calls[i]);
+		};
+	};
+
+	return;
+
+};
