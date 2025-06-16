@@ -48,7 +48,7 @@ void _syscalls_add(int syscall){
 			syscalls[i] = syscall;
 		};
 	};
-
+printf("%d\n", syscall);
 	return;
 
 }

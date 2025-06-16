@@ -60,8 +60,7 @@ int main(int argc, char *argv[]){
 
 	/* detect syscalls */
 
-	char **dynfuns = elf_get_dynsym(bin);
-	dynfuns = glibc_get_syscalls(dynfuns);
+	elf_get_dyn_syscalls(bin);
 
 	/* cleanup */
 

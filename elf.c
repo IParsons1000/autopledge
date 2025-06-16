@@ -11,9 +11,15 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include "elf.h"
+#include "glibc.h"
+
+dyn_handler_t dyn_handler[DYN_NUM_HANDLERS] = {
+	{ "libc.so.6", &glibc_get_syscalls }
+};
 
 elf_t *elf_load(char *file);
 char **elf_get_dynsym(elf_t *elf);
+void elf_get_dyn_syscalls(elf_t *elf);
 void elf_free(elf_t *elf);
 
 elf_t *elf_load(char *file){
@@ -211,6 +217,7 @@ char **elf_get_dynsym(elf_t *elf){
 	/* load .dynamic section */
 
 	Elf64_Dyn *dynamic = (Elf64_Dyn *)elf->secs[i];
+	elf->dynamic = i;
 
 	if(dynamic == NULL){
 		return NULL;
@@ -250,6 +257,9 @@ char **elf_get_dynsym(elf_t *elf){
 		printf("Error: no .dynstr section in file %s\n", elf->name);
 		return NULL;
 	};
+
+	elf->dynsym = dsymi;
+	elf->dynstr = dstri;
 
 	/* load .dynsym section as a symbol table and .dynstr as a string table */
 
@@ -301,6 +311,32 @@ char **elf_get_dynsym(elf_t *elf){
 	};
 
 }
+
+void elf_get_dyn_syscalls(elf_t *elf){
+
+	char **dynsyms = elf_get_dynsym(elf);
+	char **needed = malloc(sizeof(char *));
+	int numneeded = 0;
+
+	for(int k = 0; k < (int)(elf->shdr[elf->dynamic].sh_size / elf->shdr[elf->dynamic].sh_entsize); k++){
+		if(((Elf64_Dyn *)(elf->secs[elf->dynamic]))[k].d_tag == DT_NEEDED){
+			needed = realloc(needed, ++numneeded * sizeof(char *));
+			needed[numneeded-1] = &elf->secs[elf->dynstr][(int)((Elf64_Dyn *)(elf->secs[elf->dynamic]))[k].d_un.d_val];
+		};
+	};
+
+	for(int i = 0; i < numneeded; i++){
+		for(int j = 0; j < DYN_NUM_HANDLERS; j++){
+			if(!strcmp(needed[i], dyn_handler[j].obj)){
+				dynsyms = (*dyn_handler[j].handler)(dynsyms);
+				break;
+			};
+		};
+	};
+
+	return;
+
+};
 
 void elf_free(elf_t *elf){
 
