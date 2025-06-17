@@ -10,6 +10,7 @@
 #include <unistd.h>
 #include "elf.h"
 #include "syscalls.h"
+#include "seccomp.h"
 #include "glibc.h"
 
 #define NAME "autopledge"
@@ -61,6 +62,10 @@ int main(int argc, char *argv[]){
 	/* detect syscalls */
 
 	elf_get_dyn_syscalls(bin);
+
+	/* filter syscalls */
+
+	seccomp_restrict();
 
 	/* cleanup */
 
