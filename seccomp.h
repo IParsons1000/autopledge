@@ -13,7 +13,7 @@ extern "C" {
 #endif /* __cplusplus */
 
 
-void seccomp_restrict(void);
+int seccomp_restrict(void);
 
 #ifdef __cplusplus
 }

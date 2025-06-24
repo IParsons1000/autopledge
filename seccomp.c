@@ -5,6 +5,7 @@
  *
  */
 
+#include <stdio.h>
 #include <stdlib.h>
 #include <stddef.h>
 #include <unistd.h>
@@ -18,9 +19,9 @@
 #include "seccomp.h"
 #include "syscalls.h"
 
-void seccomp_restrict(void);
+int seccomp_restrict(void);
 
-void seccomp_restrict(){
+int seccomp_restrict(){
 
 	/* construct bpf's for seccomp */
 	struct sock_filter *bpf_filters = malloc(((numsyscalls * 2) + 1) * sizeof(struct sock_filter));
@@ -39,8 +40,11 @@ void seccomp_restrict(){
 	prctl(PR_SET_NO_NEW_PRIVS, 1);
 
 	/* make the call */
-	syscall(SYS_seccomp, SECCOMP_SET_MODE_FILTER, 0, &bpf_program);
+	if(syscall(SYS_seccomp, SECCOMP_SET_MODE_FILTER, 0, &bpf_program) != 0){
+		printf("Error: seccomp syscall failed\n");
+		return 1;
+	};
 
-	return;
+	return 0;
 
 }

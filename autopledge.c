@@ -65,16 +65,19 @@ int main(int argc, char *argv[]){
 
 	/* filter syscalls */
 
-	seccomp_restrict();
+	if(seccomp_restrict()){
+		elf_free(bin);
+		return 1;
+	};
+
+	/* cleanup */
+
+	elf_free(bin);
 
 exit(45);
 	/* run program */
 
 	execve(argv[optind], argv+optind, NULL);
-
-	/* cleanup */
-
-	elf_free(bin);
 
 	return 0;
 
