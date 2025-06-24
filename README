@@ -2,3 +2,20 @@ auto-pledge
 ===========
 
 automatically sandbox syscalls available to vulnerable programs
+
+auto-pledge automatically detects and whitelists syscalls used by a program
+at runtime, restricting potential injected shellcode
+
+Usage
+-----
+
+```
+./autopledge <program>
+```
+
+Build
+-----
+
+```
+make all
+```
