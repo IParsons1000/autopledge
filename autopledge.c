@@ -67,6 +67,10 @@ int main(int argc, char *argv[]){
 
 	seccomp_restrict();
 
+	/* run program */
+
+	execve(argv[optind], argv+optind, NULL);
+
 	/* cleanup */
 
 	elf_free(bin);
