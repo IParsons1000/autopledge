@@ -5,13 +5,16 @@
  *
  */
 
+#include <stdlib.h>
+#include <stddef.h>
+#include <unistd.h>
 #include <linux/seccomp.h>
 #include <linux/filter.h>
 #include <linux/audit.h>
-#include <linux/signal.h>
 #include <sys/ptrace.h>
+#include <sys/prctl.h>
+#include <sys/mman.h>
 #include <sys/syscall.h>
-#include <unistd.h>
 #include "seccomp.h"
 #include "syscalls.h"
 
@@ -23,8 +26,8 @@ void seccomp_restrict(){
 	struct sock_filter *bpf_filters = malloc(numsyscalls * 2 * sizeof(struct sock_filter));
 
 	for(int i = 0; i < numsyscalls; i++){
-		bpf_filters[i] = BPF_JUMP(BPF_JMP | BPF_JEQ | BPF_K, syscalls[i/2], 0, 4);
-		bpf_filters[i++] = BPF_STMT(BPF_RET | BPF_K, SECCOMP_RET_ALLOW);
+		bpf_filters[i] = (struct sock_filter) BPF_JUMP(BPF_JMP | BPF_JEQ | BPF_K, syscalls[i/2], 0, 1);
+		bpf_filters[i++] = (struct sock_filter) BPF_STMT(BPF_RET | BPF_K, SECCOMP_RET_ALLOW);
 	};
 
 	struct sock_fprog bpf_program = { numsyscalls, bpf_filters };
