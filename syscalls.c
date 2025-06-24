@@ -15,6 +15,7 @@ int numsyscalls = 0;
 
 void _syscalls_add(int syscall);
 void syscalls_add(int *calls);
+int syscalls_free(void);
 
 void _syscalls_add(int syscall){
 
@@ -64,5 +65,13 @@ void syscalls_add(int *calls){
 	};
 
 	return;
+
+}
+
+int syscalls_free(){
+
+	free(syscalls);
+
+	return 1;
 
 }

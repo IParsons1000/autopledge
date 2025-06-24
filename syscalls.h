@@ -21,6 +21,7 @@ extern int *syscalls; /* dynamic array of syscalls used by program */
 extern int numsyscalls; /* number of members of above array */
 
 void syscalls_add(int *calls);
+int syscalls_free(void);
 
 #ifdef __cplusplus
 }

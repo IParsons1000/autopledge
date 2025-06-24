@@ -8,6 +8,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stddef.h>
+#include <errno.h>
 #include <unistd.h>
 #include <linux/seccomp.h>
 #include <linux/filter.h>
@@ -37,10 +38,15 @@ int seccomp_restrict(){
 	struct sock_fprog bpf_program = { (2*numsyscalls) + 1, bpf_filters };
 
 	/* set no_new_privs in case it's not already set so seccomp doesn't fail */
-	prctl(PR_SET_NO_NEW_PRIVS, 1);
+	if(prctl(PR_SET_NO_NEW_PRIVS, 1, 0, 0, 0) == -1){
+		perror(NULL);
+		printf("Error: prctl(PR_SET_NO_NEW_PRIVS, 1) failed\n");
+		return 1;
+	};
 
 	/* make the call */
 	if(syscall(SYS_seccomp, SECCOMP_SET_MODE_FILTER, 0, &bpf_program) != 0){
+		perror(NULL);
 		printf("Error: seccomp syscall failed\n");
 		return 1;
 	};

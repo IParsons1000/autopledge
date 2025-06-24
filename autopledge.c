@@ -63,17 +63,15 @@ int main(int argc, char *argv[]){
 
 	elf_get_dyn_syscalls(bin);
 
-	/* filter syscalls */
-
-	if(seccomp_restrict()){
-		elf_free(bin);
-		return 1;
-	};
-
 	/* cleanup */
 
 	elf_free(bin);
 
+	/* filter syscalls */
+
+	if(seccomp_restrict() && syscalls_free()){
+		return 1;
+	};
 exit(45);
 	/* run program */
 
