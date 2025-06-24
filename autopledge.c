@@ -67,6 +67,7 @@ int main(int argc, char *argv[]){
 
 	seccomp_restrict();
 
+exit(45);
 	/* run program */
 
 	execve(argv[optind], argv+optind, NULL);
