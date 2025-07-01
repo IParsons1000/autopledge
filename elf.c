@@ -314,6 +314,10 @@ char **elf_get_dynsym(elf_t *elf){
 
 void elf_get_dyn_syscalls(elf_t *elf){
 
+	if(!(int)elf->shdr[elf->dynamic].sh_size){
+		return;
+	};
+
 	char **dynsyms = elf_get_dynsym(elf);
 	char **needed = malloc(sizeof(char *));
 	int numneeded = 0;
