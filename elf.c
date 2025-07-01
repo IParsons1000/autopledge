@@ -314,11 +314,12 @@ char **elf_get_dynsym(elf_t *elf){
 
 void elf_get_dyn_syscalls(elf_t *elf){
 
-	if(!(int)elf->shdr[elf->dynamic].sh_size){
+	char **dynsyms = elf_get_dynsym(elf);
+
+	if(!elf->shdr[elf->dynamic].sh_size || !elf->shdr[elf->dynamic].sh_entsize){
 		return;
 	};
 
-	char **dynsyms = elf_get_dynsym(elf);
 	char **needed = malloc(sizeof(char *));
 	int numneeded = 0;
 
@@ -330,6 +331,7 @@ void elf_get_dyn_syscalls(elf_t *elf){
 	};
 
 	for(int i = 0; i < numneeded; i++){
+printf("%s\n", needed[i]);
 		for(int j = 0; j < DYN_NUM_HANDLERS; j++){
 			if(!strcmp(needed[i], dyn_handler[j].obj)){
 				dynsyms = (*dyn_handler[j].handler)(dynsyms);
