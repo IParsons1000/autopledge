@@ -12,7 +12,6 @@
 extern "C" {
 #endif /* __cplusplus */
 
-
 int seccomp_restrict(void);
 
 #ifdef __cplusplus

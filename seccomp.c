@@ -20,9 +20,24 @@
 #include "seccomp.h"
 #include "syscalls.h"
 
+int syscalls_min[] = {
+                       SYS_mmap, SYS_munmap, SYS_mprotect, SYS_prlimit64, SYS_brk, /* for syscalls_free */
+                       SYS_execve, /* for starting the program */
+                       SYS_exit /* for failure */
+};
+
 int seccomp_restrict(void);
 
 int seccomp_restrict(){
+
+	/* check if seccomp is allowed */
+	if(prctl(PR_GET_SECCOMP) != 0){
+		printf("Error: seccomp is already enabled\n");
+		return 1;
+	};
+
+	/* allow syscalls needed for transferring control to the new program */
+	syscalls_add(syscalls_min);
 
 	/* construct bpf's for seccomp */
 	struct sock_filter *bpf_filters = malloc((2 * (numsyscalls + 1)) * sizeof(struct sock_filter));
@@ -37,7 +52,7 @@ int seccomp_restrict(){
 
 	/* if the syscall hasn't triggered any other filters, reject it */
 #ifdef LENIENT
-	bpf_filters[(2*numsyscalls)+1] = (struct sock_filter) BPF_STMT(BPF_RET | BPF_K, SECCOMP_RET_TRAP);
+	bpf_filters[(2*numsyscalls)+1] = (struct sock_filter) BPF_STMT(BPF_RET | BPF_K, SECCOMP_RET_ALLOW); //SECCOMP_RET_TRAP);
 #else /* !LENIENT */
 	bpf_filters[(2*numsyscalls)+1] = (struct sock_filter) BPF_STMT(BPF_RET | BPF_K, SECCOMP_RET_KILL_PROCESS);
 #endif /* LENIENT */

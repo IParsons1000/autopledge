@@ -31,9 +31,12 @@ void _syscalls_add(int syscall){
 		/* add in order, and only add if not already present */
 
 		int i, a = 0;
-		for(i = 0; i < numsyscalls && syscalls[i] < syscall; i++){
+		for(i = 0; i < numsyscalls; i++){
 			if(syscalls[i] == syscall){
 				a = 1;
+				break;
+			}
+			else if(syscalls[i] > syscall){
 				break;
 			};
 		};
@@ -45,11 +48,17 @@ void _syscalls_add(int syscall){
 				return;
 			};
 
-			memmove(&syscalls[i+1], &syscalls[i], (numsyscalls-i) * sizeof(int));
+			if(i != numsyscalls-1){
+				memmove(&syscalls[i+1], &syscalls[i], (numsyscalls-i-1) * sizeof(int));
+			};
 			syscalls[i] = syscall;
 		};
 	};
-printf("%d\n", syscall);
+
+#ifdef DEBUG
+	fprintf(stderr, "%d\n", syscall);
+#endif /* DEBUG */
+
 	return;
 
 }
