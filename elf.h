@@ -24,6 +24,8 @@ typedef struct elf_s {
 	int dynamic;      /* shdr index of .dynamic section */
 	int dynsym;       /* shdr index of .dynsym section */
 	int dynstr;       /* shdr index of .dynstr section */
+	int *exec;        /* array of executable sections (.init, .fini, .text, etc.) */
+	int numexec;      /* number of executable sections */
 } elf_t;
 
 typedef struct dyn_handler_s {

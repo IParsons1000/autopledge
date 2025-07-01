@@ -5,6 +5,7 @@
  *
  */
 
+#include <stdio.h>
 #include "elf.h"
 #include "syscalls.h"
 #include "raw.h"
@@ -13,7 +14,10 @@ void raw_get_syscalls(elf_t *elf);
 
 void raw_get_syscalls(elf_t *elf){
 
-	elf = elf;
+	if(!elf->numexec || elf->exec == NULL){
+		printf("Note: no executable sections found in file %s\n", elf->name);
+		return;
+	};
 
 	return;
 

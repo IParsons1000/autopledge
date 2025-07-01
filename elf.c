@@ -185,6 +185,21 @@ elf_t *elf_load(char *file){
 		};
 	};
 
+	/* locate executable sections */
+
+	elf->exec = NULL;
+	elf->numexec = 0;
+
+	if(elf->shdr != NULL){
+		for(int i = 0; i < (elf->ehdr.e_shnum + 1); i++){
+			if(elf->shdr[i].sh_type & SHF_EXECINSTR){
+printf("%s\n", &elf->secs[elf->ehdr.e_shstrndx][elf->shdr[i].sh_name]);
+				elf->exec = realloc(elf->exec, ++elf->numexec * sizeof(int));
+				elf->exec[elf->numexec-1] = i;
+			};
+		};
+	};
+
 	return elf;
 
 }
