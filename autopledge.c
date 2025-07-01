@@ -72,7 +72,7 @@ int main(int argc, char *argv[]){
 	if(seccomp_restrict() && syscalls_free()){
 		return 1;
 	};
-exit(45);
+
 	/* run program */
 
 	execve(argv[optind], argv+optind, NULL);

@@ -25,17 +25,22 @@ int seccomp_restrict(void);
 int seccomp_restrict(){
 
 	/* construct bpf's for seccomp */
-	struct sock_filter *bpf_filters = malloc(((numsyscalls * 2) + 1) * sizeof(struct sock_filter));
+	struct sock_filter *bpf_filters = malloc(4 * sizeof(struct sock_filter));
 
-	for(int i = 0; i < 2*numsyscalls; i++){
-		bpf_filters[i] = (struct sock_filter) BPF_JUMP(BPF_JMP | BPF_JEQ | BPF_K, syscalls[i/2], 0, 1);
-		bpf_filters[i++] = (struct sock_filter) BPF_STMT(BPF_RET | BPF_K, SECCOMP_RET_ALLOW);
-	};
+//	for(int i = 0; i < 2*numsyscalls; i++){
+//		bpf_filters[i] = (struct sock_filter) BPF_JUMP(BPF_JMP | BPF_JEQ | BPF_K, syscalls[i/2], 0, 1);
+//		bpf_filters[i++] = (struct sock_filter) BPF_STMT(BPF_RET | BPF_K, SECCOMP_RET_ALLOW);
+//	};
 
 	/* if the syscall hasn't triggered any other filters, reject it */
-	bpf_filters[2*numsyscalls] = (struct sock_filter) BPF_STMT(BPF_RET | BPF_K, SECCOMP_RET_KILL_PROCESS);
+//	bpf_filters[2*numsyscalls] = (struct sock_filter) BPF_STMT(BPF_RET | BPF_K, SECCOMP_RET_KILL_PROCESS);
 
-	struct sock_fprog bpf_program = { (2*numsyscalls) + 1, bpf_filters };
+
+bpf_filters[0] = (struct sock_filter) BPF_STMT(BPF_LD | BPF_W | BPF_ABS, (offsetof(struct seccomp_data, nr)));
+bpf_filters[1] = (struct sock_filter) BPF_JUMP(BPF_JMP | BPF_JEQ | BPF_K, SYS_exit, 0, 1);
+bpf_filters[3] = (struct sock_filter) BPF_STMT(BPF_RET | BPF_K, SECCOMP_RET_TRAP);
+bpf_filters[2] = (struct sock_filter) BPF_STMT(BPF_RET | BPF_K, SECCOMP_RET_ALLOW);
+	struct sock_fprog bpf_program = { .len = 4 /* (2*numsyscalls) + 1 */, .filter = bpf_filters };
 
 	/* set no_new_privs in case it's not already set so seccomp doesn't fail */
 	if(prctl(PR_SET_NO_NEW_PRIVS, 1, 0, 0, 0) == -1){
@@ -50,6 +55,8 @@ int seccomp_restrict(){
 		printf("Error: seccomp syscall failed\n");
 		return 1;
 	};
+
+syscall(SYS_open, 42);
 
 	return 0;
 

@@ -8,6 +8,8 @@ CFLAGS = -Wall
 CFLAGS += -Wextra
 CFLAGS += -Werror
 CFLAGS += -g
+COPTS ?=
+CFLAGS += $(COPTS)
 
 .PHONY: all clean spotless
 
