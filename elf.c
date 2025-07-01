@@ -331,7 +331,9 @@ void elf_get_dyn_syscalls(elf_t *elf){
 	};
 
 	for(int i = 0; i < numneeded; i++){
-printf("%s\n", needed[i]);
+#ifdef DEBUG
+		printf("%s\n", needed[i]);
+#endif /* DEBUG */
 		for(int j = 0; j < DYN_NUM_HANDLERS; j++){
 			if(!strcmp(needed[i], dyn_handler[j].obj)){
 				dynsyms = (*dyn_handler[j].handler)(dynsyms);

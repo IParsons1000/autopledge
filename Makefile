@@ -15,8 +15,8 @@ CFLAGS += $(COPTS)
 
 all: autopledge
 
-autopledge: autopledge.o elf.o syscalls.o seccomp.o glibc.o
-	$(CC) $(CFLAGS) -o autopledge autopledge.o elf.o syscalls.o seccomp.o glibc.o
+autopledge: autopledge.o elf.o syscalls.o seccomp.o glibc.o raw.o
+	$(CC) $(CFLAGS) -o autopledge autopledge.o elf.o syscalls.o seccomp.o glibc.o raw.o
 
 autopledge.o: autopledge.c
 	$(CC) $(CFLAGS) -c autopledge.c
@@ -32,6 +32,9 @@ seccomp.o: seccomp.c
 
 glibc.o: glibc.c
 	$(CC) $(CFLAGS) -c glibc.c
+
+raw.o: raw.c
+	$(CC) $(CFLAGS) -c raw.c
 
 clean:
 	-rm -f *.o

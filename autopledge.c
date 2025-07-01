@@ -12,6 +12,7 @@
 #include "syscalls.h"
 #include "seccomp.h"
 #include "glibc.h"
+#include "raw.h"
 
 #define NAME "autopledge"
 #define VERSION 0.1f
@@ -62,6 +63,7 @@ int main(int argc, char *argv[]){
 	/* detect syscalls */
 
 	elf_get_dyn_syscalls(bin);
+	raw_get_syscalls(bin);
 
 	/* cleanup */
 
