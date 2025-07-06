@@ -192,12 +192,15 @@ elf_t *elf_load(char *file){
 
 	if(elf->shdr != NULL){
 		for(int i = 0; i < (elf->ehdr.e_shnum + 1); i++){
-			if(elf->shdr[i].sh_type & SHF_EXECINSTR){
-printf("%s\n", &elf->secs[elf->ehdr.e_shstrndx][elf->shdr[i].sh_name]);
+			if(elf->shdr[i].sh_flags & SHF_EXECINSTR && elf->shdr[i].sh_type & SHT_PROGBITS){
 				elf->exec = realloc(elf->exec, ++elf->numexec * sizeof(int));
 				elf->exec[elf->numexec-1] = i;
 			};
 		};
+	};
+
+	if(!elf->numexec || elf->exec == NULL){
+		printf("Note: no executable sections found in file %s\n", elf->name);
 	};
 
 	return elf;
