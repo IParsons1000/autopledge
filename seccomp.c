@@ -20,11 +20,6 @@
 #include "seccomp.h"
 #include "syscalls.h"
 
-int syscalls_min[] = {
-                       SYS_exit,
-                       -1
-};
-
 int seccomp_restrict(void);
 
 int seccomp_restrict(){
@@ -34,9 +29,6 @@ int seccomp_restrict(){
 		printf("Error: seccomp is already enabled\n");
 		return 1;
 	};
-
-	/* allow syscalls needed for transferring control to the new program */
-	syscalls_add(syscalls_min);
 
 	/* construct bpf's for seccomp */
 	struct sock_filter *bpf_filters = malloc((2 * (numsyscalls + 1)) * sizeof(struct sock_filter));
