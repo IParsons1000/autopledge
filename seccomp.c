@@ -21,12 +21,8 @@
 #include "syscalls.h"
 
 int syscalls_min[] = {
-                       SYS_mmap, SYS_munmap, SYS_mprotect, SYS_prlimit64, SYS_brk, /* for syscalls_free */
-                       SYS_execve, /* for starting the program */
-                       SYS_access, SYS_openat, SYS_fstat, SYS_close, SYS_read, SYS_pread64, /* for dynamic loading */
-                       	SYS_arch_prctl, SYS_set_tid_address, SYS_set_robust_list, SYS_rseq,
-                       	SYS_getrandom, SYS_write, SYS_exit_group,
-                       SYS_exit /* for failure */
+                       SYS_exit,
+                       -1
 };
 
 int seccomp_restrict(void);

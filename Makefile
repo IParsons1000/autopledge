@@ -8,15 +8,16 @@ CFLAGS = -Wall
 CFLAGS += -Wextra
 CFLAGS += -Werror
 CFLAGS += -g
+CFLAGS += -fPIC -shared
 COPTS ?=
 CFLAGS += $(COPTS)
 
 .PHONY: all clean spotless
 
-all: autopledge
+all: libautopledge.so
 
-autopledge: autopledge.o elf.o syscalls.o seccomp.o glibc.o
-	$(CC) $(CFLAGS) -o autopledge autopledge.o elf.o syscalls.o seccomp.o glibc.o
+libautopledge.so: autopledge.o elf.o syscalls.o seccomp.o glibc.o
+	$(CC) $(CFLAGS) -o libautopledge.so autopledge.o elf.o syscalls.o seccomp.o glibc.o
 
 autopledge.o: autopledge.c
 	$(CC) $(CFLAGS) -c autopledge.c
@@ -37,4 +38,4 @@ clean:
 	-rm -f *.o
 
 spotless:
-	-rm -f autopledge *.o
+	-rm -f libautopledge.so *.o

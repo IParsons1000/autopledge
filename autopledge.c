@@ -7,6 +7,8 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
+#include <limits.h>
 #include <unistd.h>
 #include "elf.h"
 #include "syscalls.h"
@@ -15,48 +17,32 @@
 
 #define NAME "autopledge"
 #define VERSION 0.1f
-#define USAGE "Usage:\vautopledge [ -vh ] <file>\n"
 
-int main(int argc, char *argv[]){
+__attribute__ ((constructor)) void autopledege(void){
 
-	/* process command line arguments */
+	/* detect executable filename */
 
-	extern int optind, optopt;
-	extern char *optarg;
+	char *program = malloc(PATH_MAX);
 
-	int opt;
-	while((opt = getopt(argc, argv, "vh")) != -1){
-		switch(opt){
-			case 'v':
-				printf("%s %.1f\n", NAME, VERSION);
-				return 0;
-				break;
-			case 'h': /* FALLTHRU */
-			default:
-				printf("%s", USAGE);
-				return 0;
-				break;
-		};
-	};
+	memset(program, 0, PATH_MAX);
 
-	if(optind >= argc){
-		printf("%s", USAGE);
-		return 0;
-	};
+	readlink("/proc/self/exe", program, PATH_MAX-1);
 
 	/* sanity check provided program */
 
-	if(access(argv[optind], F_OK | R_OK | X_OK) != 0){
-		printf("Error: cannot access file %s\n", argv[optind]);
-		return 1;
+	if(access(program, F_OK | R_OK | X_OK) != 0){
+		printf("Error: cannot access file %s\n", program);
+		free(program);
+		return;
 	};
 
 	/* load program */
 
 	elf_t *bin;
-	bin = elf_load(argv[optind]);
+	bin = elf_load(program);
 	if(bin == NULL){
-		return 1;
+		free(program);
+		return;
 	};
 
 	/* detect syscalls */
@@ -69,14 +55,12 @@ int main(int argc, char *argv[]){
 
 	/* filter syscalls */
 
-	if(seccomp_restrict() && syscalls_free()){
-		return 1;
-	};
+	seccomp_restrict();
 
-	/* run program */
+	/* cleanup pt. 2 */
 
-	execve(argv[optind], argv+optind, NULL);
+	syscalls_free();
 
-	return 0;
+	return;
 
 }
