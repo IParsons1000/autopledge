@@ -5,7 +5,6 @@
  *
  */
 
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <limits.h>
@@ -14,11 +13,16 @@
 #include "syscalls.h"
 #include "seccomp.h"
 #include "glibc.h"
+#include "syslog.h"
 
 #define NAME "autopledge"
 #define VERSION 0.1f
 
 __attribute__ ((constructor)) void autopledege(void){
+
+	/* initialize logging */
+
+	log_init();
 
 	/* detect executable filename */
 
@@ -31,8 +35,9 @@ __attribute__ ((constructor)) void autopledege(void){
 	/* sanity check provided program */
 
 	if(access(program, F_OK | R_OK | X_OK) != 0){
-		printf("Error: cannot access file %s\n", program);
+		log_error("cannot access file %s\n", program);
 		free(program);
+		log_close();
 		return;
 	};
 
@@ -42,6 +47,7 @@ __attribute__ ((constructor)) void autopledege(void){
 	bin = elf_load(program);
 	if(bin == NULL){
 		free(program);
+		log_close();
 		return;
 	};
 
@@ -60,6 +66,8 @@ __attribute__ ((constructor)) void autopledege(void){
 	/* cleanup pt. 2 */
 
 	syscalls_free();
+
+	log_close();
 
 	return;
 

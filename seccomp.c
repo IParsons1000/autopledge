@@ -5,8 +5,8 @@
  *
  */
 
-#include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <stddef.h>
 #include <errno.h>
 #include <unistd.h>
@@ -19,6 +19,7 @@
 #include <sys/syscall.h>
 #include "seccomp.h"
 #include "syscalls.h"
+#include "syslog.h"
 
 int seccomp_restrict(void);
 
@@ -26,7 +27,7 @@ int seccomp_restrict(){
 
 	/* check if seccomp is allowed */
 	if(prctl(PR_GET_SECCOMP) != 0){
-		printf("Error: seccomp is already enabled\n");
+		log_error("seccomp is already enabled\n");
 		return 1;
 	};
 
@@ -52,15 +53,13 @@ int seccomp_restrict(){
 
 	/* set no_new_privs in case it's not already set so seccomp doesn't fail */
 	if(prctl(PR_SET_NO_NEW_PRIVS, 1, 0, 0, 0) == -1){
-		perror(NULL);
-		printf("Error: prctl(PR_SET_NO_NEW_PRIVS, 1) failed\n");
+		log_error("prctl(PR_SET_NO_NEW_PRIVS, 1) failed: %s\n", strerror(errno));
 		return 1;
 	};
 
 	/* make the call */
 	if(syscall(SYS_seccomp, SECCOMP_SET_MODE_FILTER, 0, &bpf_program) != 0){
-		perror(NULL);
-		printf("Error: seccomp syscall failed\n");
+		log_error("seccomp syscall failed: %s\n", strerror(errno));
 		return 1;
 	};
 
