@@ -22,7 +22,17 @@ extern "C" {
 # define log_debug(...) syslog(LOG_DEBUG, __VA_ARGS__)
 # define log_close() closelog()
 
-#else /* !USE_SYSLOG */
+#elifdef USE_STDERR
+
+# include <stdio.h>
+
+# define log_init()
+# define log_note(...) fprintf(stderr, __VA_ARGS__)
+# define log_error(...) fprintf(stderr, __VA_ARGS__)
+# define log_debug(...) fprintf(stderr, __VA_ARGS__)
+# define log_close()
+
+#else /* !USE_SYSLOG && !USE_STDERR */
 
 # define log_init()
 # define log_note(...)
@@ -30,7 +40,7 @@ extern "C" {
 # define log_debug(...)
 # define log_close()
 
-#endif /* USE_SYSLOG */
+#endif /* USE_SYSLOG || USE_STDERR */
 
 #ifdef __cplusplus
 }

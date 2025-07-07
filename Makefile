@@ -18,6 +18,9 @@ ifeq ($(LENIENT),1)
 COPTS += -DLENIENT
 endif
 ifeq ($(USE_SYSLOG),0)
+else ifeq ($(USE_STDERR),1)
+COPTS += -DUSE_STDERR
+else ifeq ($(USE_NOLOGS),1)
 else
 COPTS += -DUSE_SYSLOG
 endif
