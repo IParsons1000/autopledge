@@ -20,3 +20,10 @@ Build
 make all
 make test
 ```
+
+Install
+-------
+
+```
+sudo make install
+```
