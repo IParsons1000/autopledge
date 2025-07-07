@@ -5,6 +5,7 @@
  *
  */
 
+#include <stddef.h>
 #include "../../elf.h"
 
 /* Return values:

@@ -20,4 +20,4 @@ test-elf-clean:
 	-rm -f $(TESTDIR)/test-elf/dummy $(TESTDIR)/test-elf/test-elf
 
 test-elf-spotless: test-elf-clean
-	-rm -f $(TESDIR)/test-elf/test-elf.log
+	-rm -f $(TESTDIR)/test-elf/test-elf.log
