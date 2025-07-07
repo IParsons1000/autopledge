@@ -9,7 +9,7 @@
 #include <string.h>
 #include <errno.h>
 #include "syscalls.h"
-#include "syslog.h"
+#include "log.h"
 
 int *syscalls = NULL;
 int numsyscalls = 0;

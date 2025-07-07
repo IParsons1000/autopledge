@@ -24,6 +24,8 @@ typedef struct elf_s {
 	int dynamic;      /* shdr index of .dynamic section */
 	int dynsym;       /* shdr index of .dynsym section */
 	int dynstr;       /* shdr index of .dynstr section */
+	char **needed;    /* array of names of needed so's */
+	int numneeded;    /* number of needed so's */
 } elf_t;
 
 typedef struct dyn_handler_s {

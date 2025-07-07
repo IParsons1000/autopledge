@@ -8,9 +8,13 @@
 #include <string.h>
 #include "glibc.h"
 
+#define GLIBC_NUM_FUNS 4
+
 const syscall_by_fun_t glibc_syscalls_by_fun[GLIBC_NUM_FUNS] = {
-	{ "printf", (int *)&(int []){ 0, -1 } },
-	{ "scanf", (int *)&(int []){ 0, 1, -1 } }
+	{ "printf", (int *)&(int []){ SYS_open, -1 } },
+	{ "scanf",  (int *)&(int []){ SYS_open, SYS_read, -1 } },
+	{ "open",   (int *)&(int []){ SYS_open, -1 } },
+	{ "open64", (int *)&(int []){ SYS_open, -1 } }
 };
 
 char **glibc_get_syscalls(char **funs);

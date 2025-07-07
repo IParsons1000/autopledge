@@ -14,12 +14,12 @@
 #include "syscalls.h"
 #include "seccomp.h"
 #include "glibc.h"
-#include "syslog.h"
+#include "log.h"
 
 #define NAME "autopledge"
 #define VERSION 0.1f
 
-__attribute__ ((constructor)) void autopledege(void){
+__attribute__ ((constructor)) void autopledge(void){
 
 	/* initialize logging */
 

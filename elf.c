@@ -12,7 +12,7 @@
 #include <unistd.h>
 #include "elf.h"
 #include "glibc.h"
-#include "syslog.h"
+#include "log.h"
 
 dyn_handler_t dyn_handler[DYN_NUM_HANDLERS] = {
 	{ "libc.so.6", &glibc_get_syscalls }
@@ -188,16 +188,6 @@ elf_t *elf_load(char *file){
 		};
 	};
 
-	return elf;
-
-}
-
-char **elf_get_dynsym(elf_t *elf){
-
-	if(elf == NULL || elf->shdr == NULL || elf->secs == NULL){
-		return NULL;
-	};
-
 	/* locate .dynamic section */
 
 	int i;
@@ -214,77 +204,114 @@ char **elf_get_dynsym(elf_t *elf){
 
 	if(i == -1){
 		log_note("no .dynamic section found in file %s", elf->name);
+		elf->dynamic = -1;
+	}
+	else{
+		elf->dynamic = i;
+
+		/* locate .dynsym and .dynstr section */
+
+		int dsymi = -1;
+		int dstri = -1;
+		Elf64_Dyn *dynamic = (Elf64_Dyn *)elf->secs[elf->dynamic];
+
+		for(int k = 0; k < (int)(elf->shdr[i].sh_size / elf->shdr[i].sh_entsize); k++){
+			if(dynamic[k].d_tag == DT_SYMTAB){
+				for(int a = 0; a < elf->ehdr.e_shnum; a++){
+					if(elf->shdr[a].sh_addr == dynamic[k].d_un.d_ptr){
+						dsymi = a;
+						break;
+					};
+				};
+			};
+
+			if(dynamic[k].d_tag == DT_STRTAB){
+				for(int a = 0; a < elf->ehdr.e_shnum; a++){
+					if(elf->shdr[a].sh_addr == dynamic[k].d_un.d_ptr){
+						dstri = a;
+						break;
+					};
+				};
+			};
+		};
+
+		if(dsymi == -1){
+			log_note("no .dynsym section in file %s", elf->name);
+			return NULL;
+		};
+
+		if(dstri == -1){
+			log_note("no .dynstr section in file %s", elf->name);
+			return NULL;
+		};
+
+		elf->dynsym = dsymi;
+		elf->dynstr = dstri;
+
+		/* enumerate needed shared objects */
+
+		if(!elf->shdr[elf->dynamic].sh_size || !elf->shdr[elf->dynamic].sh_entsize){
+			return NULL;
+		};
+
+		int numneeded = 0;
+		char **needed = NULL;
+
+		for(int k = 0; k < (int)(elf->shdr[elf->dynamic].sh_size / elf->shdr[elf->dynamic].sh_entsize); k++){
+			if(((Elf64_Dyn *)(elf->secs[elf->dynamic]))[k].d_tag == DT_NEEDED){
+				needed = realloc(needed, ++numneeded * sizeof(char *));
+				if(needed == NULL){
+					log_error("realloc() failed (%s)", strerror(errno));
+					return NULL;
+				};
+				needed[numneeded-1] = &elf->secs[elf->dynstr][(int)((Elf64_Dyn *)(elf->secs[elf->dynamic]))[k].d_un.d_val];
+			};
+		};
+
+		elf->numneeded = numneeded;
+		elf->needed = needed;
+
+	};
+
+	return elf;
+
+}
+
+char **elf_get_dynsym(elf_t *elf){
+
+	if(elf == NULL || elf->shdr == NULL || elf->secs == NULL){
 		return NULL;
 	};
 
 	/* load .dynamic section */
 
-	Elf64_Dyn *dynamic = (Elf64_Dyn *)elf->secs[i];
-	elf->dynamic = i;
+	if(elf->dynamic == -1 || elf->dynsym == -1 || elf->dynstr == -1){
+		return NULL;
+	};
+
+	Elf64_Dyn *dynamic = (Elf64_Dyn *)elf->secs[elf->dynamic];
 
 	if(dynamic == NULL){
 		return NULL;
 	};
 
-	/* locate .dynsym and .dynstr section */
-
-	int dsymi = -1;
-	int dstri = -1;
-
-	for(int k = 0; k < (int)(elf->shdr[i].sh_size / elf->shdr[i].sh_entsize); k++){
-		if(dynamic[k].d_tag == DT_SYMTAB){
-			for(int a = 0; a < elf->ehdr.e_shnum; a++){
-				if(elf->shdr[a].sh_addr == dynamic[k].d_un.d_ptr){
-					dsymi = a;
-					break;
-				};
-			};
-		};
-
-		if(dynamic[k].d_tag == DT_STRTAB){
-			for(int a = 0; a < elf->ehdr.e_shnum; a++){
-				if(elf->shdr[a].sh_addr == dynamic[k].d_un.d_ptr){
-					dstri = a;
-					break;
-				};
-			};
-		};
-	};
-
-	if(dsymi == -1){
-		log_error("no .dynsym section in file %s", elf->name);
-		return NULL;
-	};
-
-	if(dstri == -1){
-		log_error("no .dynstr section in file %s", elf->name);
-		return NULL;
-	};
-
-	elf->dynsym = dsymi;
-	elf->dynstr = dstri;
-
 	/* load .dynsym section as a symbol table and .dynstr as a string table */
 
-	Elf64_Sym *dynsym = (Elf64_Sym *)elf->secs[dsymi];
-	char *dynstr = elf->secs[dstri];
+	Elf64_Sym *dynsym = (Elf64_Sym *)elf->secs[elf->dynsym];
+	char *dynstr = elf->secs[elf->dynstr];
 
-	if(elf->shdr[dsymi].sh_entsize != sizeof(Elf64_Sym)){
+	if(elf->shdr[elf->dynsym].sh_entsize != sizeof(Elf64_Sym)){
 		log_error(".dynsym entry size does not match expected value in file %s", elf->name);
 		return NULL;
 	};
 
 	/* return dynamically linked functions */
 
-	char **syms = malloc(sizeof(char *));
+	char **syms = NULL;
 	int numsyms = 0;
 
-	if(syms == NULL){
-		log_error("malloc() failed (%s)", strerror(errno));
-		return NULL;
-	};
-
-	for(int j = 0; j < (int)(elf->shdr[dsymi].sh_size / elf->shdr[dsymi].sh_entsize); j++){
+log_debug("%ld / %ld = %d (%ld)", elf->shdr[elf->dynsym].sh_size, elf->shdr[elf->dynsym].sh_entsize, (int)(elf->shdr[elf->dynsym].sh_size / elf->shdr[elf->dynsym].sh_entsize), sizeof(Elf64_Sym));
+	for(int j = 0; j < (int)(elf->shdr[elf->dynsym].sh_size / elf->shdr[elf->dynsym].sh_entsize); j++){
 		if(dynsym[j].st_info & STT_FUNC){
 			numsyms++;
 			syms = realloc(syms, numsyms * sizeof(char *));
@@ -294,6 +321,7 @@ char **elf_get_dynsym(elf_t *elf){
 			};
 			syms[numsyms-1] = &dynstr[dynsym[j].st_name];
 		};
+log_debug(&dynstr[dynsym[j].st_name]);
 	};
 
 	/* add null terminating entry */
@@ -305,7 +333,7 @@ char **elf_get_dynsym(elf_t *elf){
 	};
 	syms[numsyms] = NULL;
 
-	if(!numsyms){
+	if(syms != NULL){
 		free(syms);
 		return NULL;
 	}
@@ -319,24 +347,9 @@ void elf_get_dyn_syscalls(elf_t *elf){
 
 	char **dynsyms = elf_get_dynsym(elf);
 
-	if(!elf->shdr[elf->dynamic].sh_size || !elf->shdr[elf->dynamic].sh_entsize){
-		return;
-	};
-
-	char **needed = malloc(sizeof(char *));
-	int numneeded = 0;
-
-	for(int k = 0; k < (int)(elf->shdr[elf->dynamic].sh_size / elf->shdr[elf->dynamic].sh_entsize); k++){
-		if(((Elf64_Dyn *)(elf->secs[elf->dynamic]))[k].d_tag == DT_NEEDED){
-			needed = realloc(needed, ++numneeded * sizeof(char *));
-			needed[numneeded-1] = &elf->secs[elf->dynstr][(int)((Elf64_Dyn *)(elf->secs[elf->dynamic]))[k].d_un.d_val];
-		};
-	};
-
-	for(int i = 0; i < numneeded; i++){
-log_note("%s", needed[i]);
+	for(int i = 0; i < elf->numneeded; i++){
 		for(int j = 0; j < DYN_NUM_HANDLERS; j++){
-			if(!strcmp(needed[i], dyn_handler[j].obj)){
+			if(!strcmp(elf->needed[i], dyn_handler[j].obj)){
 				dynsyms = (*dyn_handler[j].handler)(dynsyms);
 				break;
 			};
@@ -378,6 +391,10 @@ void elf_free(elf_t *elf){
 			};
 
 			free(elf->shdr);
+		};
+
+		if(elf->needed != NULL){
+			free(elf->needed);
 		};
 
 		free(elf);

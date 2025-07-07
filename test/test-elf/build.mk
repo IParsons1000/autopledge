@@ -5,9 +5,19 @@
 
 .PHONY: test-elf test-elf-clean test-elf-spotless
 
-test-elf:
-	sh ./test-elf.sh
+test-elf: $(TESTDIR)/test-elf/dummy $(TESTDIR)/test-elf/test-elf
+	$(TESTDIR)/test-elf/test-elf.sh $(TESTFILE) $(TESTDIR)/test-elf/test-elf.log $(TESTDIR)/test-elf $(TOP)
+
+$(TESTDIR)/test-elf/dummy: $(TESTDIR)/test-elf/dummy.c
+	cd $(TESTDIR)/test-elf && \
+	cc -o dummy dummy.c
+
+$(TESTDIR)/test-elf/test-elf: $(TESTDIR)/test-elf/test-elf.c
+	cd $(TESTDIR)/test-elf && \
+	cc -o test-elf -L$(TOP) -l:$(AUTOPLEDGE) test-elf.c
 
 test-elf-clean:
+	-rm -f $(TESTDIR)/test-elf/dummy $(TESTDIR)/test-elf/test-elf
 
-test-elf-spotless:
+test-elf-spotless: test-elf-clean
+	-rm -f $(TESDIR)/test-elf/test-elf.log

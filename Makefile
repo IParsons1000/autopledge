@@ -3,6 +3,9 @@
 # autopledge - automatically sandbox syscalls
 #
 
+# custom config
+AUTOPLEDGE ?= libautopledge.so
+
 # default and optional build settings
 CC ?= cc
 CFLAGS = -Wall
@@ -11,6 +14,13 @@ CFLAGS += -Werror
 CFLAGS += -g
 CFLAGS += -fPIC -shared
 COPTS ?=
+ifeq ($(LENIENT),1)
+COPTS += -DLENIENT
+endif
+ifeq ($(USE_SYSLOG),0)
+else
+COPTS += -DUSE_SYSLOG
+endif
 CFLAGS += $(COPTS)
 
 # module build files (provides `test-all', `test-clean', and `test-spotless')
@@ -18,10 +28,10 @@ include test/build.mk
 
 .PHONY: all test clean spotless
 
-all: libautopledge.so
+all: $(AUTOPLEDGE)
 
-libautopledge.so: autopledge.o elf.o syscalls.o seccomp.o glibc.o
-	$(CC) $(CFLAGS) -o libautopledge.so autopledge.o elf.o syscalls.o seccomp.o glibc.o
+$(AUTOPLEDGE): autopledge.o elf.o syscalls.o seccomp.o glibc.o
+	$(CC) $(CFLAGS) -o $(AUTOPLEDGE) autopledge.o elf.o syscalls.o seccomp.o glibc.o
 
 autopledge.o: autopledge.c
 	$(CC) $(CFLAGS) -c autopledge.c
@@ -44,4 +54,4 @@ clean: test-clean
 	-rm -f *.o
 
 spotless: test-spotless
-	-rm -f libautopledge.so *.o
+	-rm -f $(AUTOPLEDGE) *.o

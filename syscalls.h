@@ -12,6 +12,8 @@
 extern "C" {
 #endif /* __cplusplus */
 
+#include <syscall.h>
+
 typedef struct syscall_by_fun_s {
 	char *fun;
 	int *syscalls;

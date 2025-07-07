@@ -19,7 +19,7 @@
 #include <sys/syscall.h>
 #include "seccomp.h"
 #include "syscalls.h"
-#include "syslog.h"
+#include "log.h"
 
 int seccomp_restrict(void);
 
