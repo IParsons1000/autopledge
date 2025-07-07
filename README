@@ -18,4 +18,5 @@ Build
 
 ```
 make all
+make test
 ```
