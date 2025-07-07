@@ -3,13 +3,16 @@
 # autopledge test suite - master makefile
 #
 
+# individual test names
+TESTS = $(find . -maxdepth 1 -regex "test-.*$")
+
 # individual test build files (provides test-* and poc-*)
-#include */build.mk
+include test/*/build.mk
 
 .PHONY: test-all test-clean test-spotless
 
-test-all: #test-*
+test-all: $(TESTS)
 
-test-clean: #test-*-clean
+test-clean: $(wildcard $(addsuffix -clean,$(TESTS)))
 
-test-spotless: #test-*-spotless
+test-spotless: $(wildcard $(addsuffix -spotless,$(TESTS)))
