@@ -28,10 +28,20 @@ __attribute__ ((constructor)) void autopledege(void){
 	/* detect executable filename */
 
 	char *program = malloc(PATH_MAX);
+	if(program == NULL){
+		log_error("malloc() failed (%s)", strerror(errno));
+		log_close();
+		return;
+	};
 
 	memset(program, 0, PATH_MAX);
 
-	readlink("/proc/self/exe", program, PATH_MAX-1);
+	if(readlink("/proc/self/exe", program, PATH_MAX-1) == -1){
+		log_error("readlink(\"/proc/self/exe\") failed (%s)", strerror(errno));
+		free(program);
+		log_close();
+		return;
+	};
 
 	/* sanity check provided program */
 
