@@ -8,13 +8,16 @@
 #include <string.h>
 #include "glibc.h"
 
-#define GLIBC_NUM_FUNS 4
+#define GLIBC_NUM_FUNS 5+1
 
 const syscall_by_fun_t glibc_syscalls_by_fun[GLIBC_NUM_FUNS] = {
 	{ "printf", (int *)&(int []){ SYS_open, -1 } },
 	{ "scanf",  (int *)&(int []){ SYS_open, SYS_read, -1 } },
 	{ "open",   (int *)&(int []){ SYS_open, -1 } },
-	{ "open64", (int *)&(int []){ SYS_open, -1 } }
+	{ "open64", (int *)&(int []){ SYS_open, -1 } },
+	{ "read",   (int *)&(int []){ SYS_read, -1 } },
+//temp
+	{ "elf_load", (int *)&(int []){ SYS_open, SYS_openat, SYS_read, SYS_lseek, SYS_getpid, SYS_fstat, SYS_close, SYS_exit, SYS_exit_group, SYS_write, SYS_socket, -1 } }
 };
 
 char **glibc_get_syscalls(char **funs);

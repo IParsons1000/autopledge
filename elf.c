@@ -310,7 +310,6 @@ char **elf_get_dynsym(elf_t *elf){
 	char **syms = NULL;
 	int numsyms = 0;
 
-log_debug("%ld / %ld = %d (%ld)", elf->shdr[elf->dynsym].sh_size, elf->shdr[elf->dynsym].sh_entsize, (int)(elf->shdr[elf->dynsym].sh_size / elf->shdr[elf->dynsym].sh_entsize), sizeof(Elf64_Sym));
 	for(int j = 0; j < (int)(elf->shdr[elf->dynsym].sh_size / elf->shdr[elf->dynsym].sh_entsize); j++){
 		if(dynsym[j].st_info & STT_FUNC){
 			numsyms++;
@@ -321,7 +320,6 @@ log_debug("%ld / %ld = %d (%ld)", elf->shdr[elf->dynsym].sh_size, elf->shdr[elf-
 			};
 			syms[numsyms-1] = &dynstr[dynsym[j].st_name];
 		};
-log_debug(&dynstr[dynsym[j].st_name]);
 	};
 
 	/* add null terminating entry */
@@ -333,7 +331,7 @@ log_debug(&dynstr[dynsym[j].st_name]);
 	};
 	syms[numsyms] = NULL;
 
-	if(syms != NULL){
+	if(!numsyms){
 		free(syms);
 		return NULL;
 	}

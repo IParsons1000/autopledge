@@ -17,7 +17,7 @@
 
 int main(int argc, char *argv[]){
 
-	elf_t *elf = elf_load("dummy");
+	elf_t *elf = elf_load(argv[1]);
 	if(elf == NULL){
 		return 1;
 	};

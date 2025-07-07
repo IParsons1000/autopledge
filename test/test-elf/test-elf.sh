@@ -12,11 +12,11 @@ SUCCESS=0
 
 echo "[INFO]  test-elf: starting" >> ${TESTLOG}
 
-LD_LIBRARY_PATH=$TOP $CURRDIR/test-elf
+LD_LIBRARY_PATH=$TOP $CURRDIR/test-elf $CURRDIR/dummy
 
 case $? in
   0)
-    SUCCESS = 1
+    SUCCESS=1
     ;;
   1)
     echo "[ERROR] test-elf: elf_load failed (returned NULL)" >> ${TESTLOG} 
@@ -26,7 +26,7 @@ case $? in
     ;;
 esac
 
-if [ $SUCCESS -eq 0 ] ; then
+if [ "$SUCCESS" -eq 0 ] ; then
   echo "[INFO]  test-elf: failed" >> ${TESTLOG}
   echo "test-elf : F" >> ${TESTFILE}
 else
