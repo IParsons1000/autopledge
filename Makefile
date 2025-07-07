@@ -12,7 +12,7 @@ CFLAGS = -Wall
 CFLAGS += -Wextra
 CFLAGS += -Werror
 CFLAGS += -g
-CFLAGS += -fPIC -shared
+CFLAGS += -fPIC
 COPTS ?=
 ifeq ($(LENIENT),1)
 COPTS += -DLENIENT
@@ -31,7 +31,7 @@ include test/build.mk
 all: $(AUTOPLEDGE)
 
 $(AUTOPLEDGE): autopledge.o elf.o syscalls.o seccomp.o glibc.o
-	$(CC) $(CFLAGS) -o $(AUTOPLEDGE) autopledge.o elf.o syscalls.o seccomp.o glibc.o
+	$(CC) $(CFLAGS) -shared -o $(AUTOPLEDGE) autopledge.o elf.o syscalls.o seccomp.o glibc.o
 
 autopledge.o: autopledge.c
 	$(CC) $(CFLAGS) -c autopledge.c
