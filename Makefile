@@ -5,6 +5,8 @@
 
 # custom config
 AUTOPLEDGE ?= libautopledge.so
+PREFIX ?= /usr
+LIBDIR ?= $(PREFIX)/lib64
 
 # default and optional build settings
 CC ?= cc
@@ -29,7 +31,7 @@ CFLAGS += $(COPTS)
 # module build files (provides `test-all', `test-clean', and `test-spotless')
 include test/build.mk
 
-.PHONY: all test clean spotless
+.PHONY: all test install uninstall clean spotless
 
 all: $(AUTOPLEDGE)
 
@@ -52,6 +54,12 @@ glibc.o: glibc.c
 	$(CC) $(CFLAGS) -c glibc.c
 
 test: all test-all
+
+install: all
+	install $(AUTOPLEDGE) $(LIBDIR)
+
+uninstall:
+	rm -f $(LIBDIR)/$(AUTOPLEDGE)
 
 clean: test-clean
 	-rm -f *.o
