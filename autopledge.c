@@ -5,58 +5,51 @@
  *
  */
 
-#include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
+#include <errno.h>
+#include <limits.h>
 #include <unistd.h>
 #include "elf.h"
 #include "syscalls.h"
 #include "seccomp.h"
 #include "glibc.h"
+#include "syslog.h"
 
 #define NAME "autopledge"
 #define VERSION 0.1f
-#define USAGE "Usage:\vautopledge [ -vh ] <file>\n"
 
-int main(int argc, char *argv[]){
+__attribute__ ((constructor)) void autopledege(void){
 
-	/* process command line arguments */
+	/* initialize logging */
 
-	extern int optind, optopt;
-	extern char *optarg;
+	log_init();
 
-	int opt;
-	while((opt = getopt(argc, argv, "vh")) != -1){
-		switch(opt){
-			case 'v':
-				printf("%s %.1f\n", NAME, VERSION);
-				return 0;
-				break;
-			case 'h': /* FALLTHRU */
-			default:
-				printf("%s", USAGE);
-				return 0;
-				break;
-		};
-	};
+	/* detect executable filename */
 
-	if(optind >= argc){
-		printf("%s", USAGE);
-		return 0;
-	};
+	char *program = malloc(PATH_MAX);
+
+	memset(program, 0, PATH_MAX);
+
+	readlink("/proc/self/exe", program, PATH_MAX-1);
 
 	/* sanity check provided program */
 
-	if(access(argv[optind], F_OK | R_OK | X_OK) != 0){
-		printf("Error: cannot access file %s\n", argv[optind]);
-		return 1;
+	if(access(program, F_OK | R_OK | X_OK) != 0){
+		log_error("cannot access file %s (%s)", program, strerror(errno));
+		free(program);
+		log_close();
+		return;
 	};
 
 	/* load program */
 
 	elf_t *bin;
-	bin = elf_load(argv[optind]);
+	bin = elf_load(program);
 	if(bin == NULL){
-		return 1;
+		free(program);
+		log_close();
+		return;
 	};
 
 	/* detect syscalls */
@@ -69,14 +62,15 @@ int main(int argc, char *argv[]){
 
 	/* filter syscalls */
 
-	if(seccomp_restrict() && syscalls_free()){
-		return 1;
+	if(seccomp_restrict()){
+		log_close(); /* seccomp_restrict should clean up logging, unless
+                                 it fails before it gets there */
 	};
 
-	/* run program */
+	/* cleanup pt. 2 */
 
-	execve(argv[optind], argv+optind, NULL);
+	syscalls_free();
 
-	return 0;
+	return;
 
 }

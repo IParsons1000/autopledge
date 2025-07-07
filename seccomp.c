@@ -5,8 +5,8 @@
  *
  */
 
-#include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <stddef.h>
 #include <errno.h>
 #include <unistd.h>
@@ -19,15 +19,7 @@
 #include <sys/syscall.h>
 #include "seccomp.h"
 #include "syscalls.h"
-
-int syscalls_min[] = {
-                       SYS_mmap, SYS_munmap, SYS_mprotect, SYS_prlimit64, SYS_brk, /* for syscalls_free */
-                       SYS_execve, /* for starting the program */
-                       SYS_access, SYS_openat, SYS_fstat, SYS_close, SYS_read, SYS_pread64, /* for dynamic loading */
-                       	SYS_arch_prctl, SYS_set_tid_address, SYS_set_robust_list, SYS_rseq,
-                       	SYS_getrandom, SYS_write, SYS_exit_group,
-                       SYS_exit /* for failure */
-};
+#include "syslog.h"
 
 int seccomp_restrict(void);
 
@@ -35,15 +27,16 @@ int seccomp_restrict(){
 
 	/* check if seccomp is allowed */
 	if(prctl(PR_GET_SECCOMP) != 0){
-		printf("Error: seccomp is already enabled\n");
+		log_error("seccomp is already enabled");
 		return 1;
 	};
 
-	/* allow syscalls needed for transferring control to the new program */
-	syscalls_add(syscalls_min);
-
 	/* construct bpf's for seccomp */
 	struct sock_filter *bpf_filters = malloc((2 * (numsyscalls + 1)) * sizeof(struct sock_filter));
+	if(bpf_filters == NULL){
+		log_error("malloc() failed (%s)", strerror(errno));
+		return 1;
+	};
 
 	/* load syscall number */
 	bpf_filters[0] = (struct sock_filter) BPF_STMT(BPF_LD | BPF_W | BPF_ABS, (offsetof(struct seccomp_data, nr)));
@@ -64,15 +57,17 @@ int seccomp_restrict(){
 
 	/* set no_new_privs in case it's not already set so seccomp doesn't fail */
 	if(prctl(PR_SET_NO_NEW_PRIVS, 1, 0, 0, 0) == -1){
-		perror(NULL);
-		printf("Error: prctl(PR_SET_NO_NEW_PRIVS, 1) failed\n");
+		log_error("prctl(PR_SET_NO_NEW_PRIVS, 1) failed (%s)", strerror(errno));
 		return 1;
 	};
 
+	/* do necessary cleanup before potentially restricting close(2) */
+	log_close();
+
 	/* make the call */
 	if(syscall(SYS_seccomp, SECCOMP_SET_MODE_FILTER, 0, &bpf_program) != 0){
-		perror(NULL);
-		printf("Error: seccomp syscall failed\n");
+		log_init();
+		log_error("seccomp syscall failed (%s)", strerror(errno));
 		return 1;
 	};
 

@@ -5,10 +5,11 @@
  *
  */
 
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <errno.h>
 #include "syscalls.h"
+#include "syslog.h"
 
 int *syscalls = NULL;
 int numsyscalls = 0;
@@ -22,7 +23,7 @@ void _syscalls_add(int syscall){
 	if(syscalls == NULL){
 		syscalls = malloc(++numsyscalls * sizeof(int));
 		if(syscalls == NULL){
-			printf("Error: malloc(++numsyscalls * sizeof(int)) failed\n");
+			log_error("malloc() failed (%s)", strerror(errno));
 			return;
 		};
 		syscalls[0] = syscall;
@@ -44,7 +45,7 @@ void _syscalls_add(int syscall){
 		if(!a){
 			syscalls = realloc(syscalls, ++numsyscalls * sizeof(int));
 			if(syscalls == NULL){
-				printf("Error: realloc(syscalls, ++numsyscalls * sizeof(int)) failed\n");
+				log_error("realloc() failed (%s)", strerror(errno));
 				return;
 			};
 
@@ -54,10 +55,6 @@ void _syscalls_add(int syscall){
 			syscalls[i] = syscall;
 		};
 	};
-
-#ifdef DEBUG
-	fprintf(stderr, "%d\n", syscall);
-#endif /* DEBUG */
 
 	return;
 

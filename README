@@ -10,7 +10,7 @@ Usage
 -----
 
 ```
-./autopledge <program>
+$ LD_PRELOAD=./libautopledge.so <program>
 ```
 
 Build
