@@ -7,7 +7,6 @@
 
 #include <string.h>
 #include "glibc.h"
-#include "syslog.h"
 
 const syscall_by_fun_t glibc_syscalls_by_fun[GLIBC_NUM_FUNS] = {
 	{ "printf", (int *)&(int []){ 0, -1 } },

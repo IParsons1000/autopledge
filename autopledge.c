@@ -7,6 +7,7 @@
 
 #include <stdlib.h>
 #include <string.h>
+#include <errno.h>
 #include <limits.h>
 #include <unistd.h>
 #include "elf.h"
@@ -35,7 +36,7 @@ __attribute__ ((constructor)) void autopledege(void){
 	/* sanity check provided program */
 
 	if(access(program, F_OK | R_OK | X_OK) != 0){
-		log_error("cannot access file %s\n", program);
+		log_error("cannot access file %s (%s)", program, strerror(errno));
 		free(program);
 		log_close();
 		return;
@@ -61,13 +62,14 @@ __attribute__ ((constructor)) void autopledege(void){
 
 	/* filter syscalls */
 
-	seccomp_restrict();
+	if(seccomp_restrict()){
+		log_close(); /* seccomp_restrict should clean up logging, unless
+                                 it fails before it gets there */
+	};
 
 	/* cleanup pt. 2 */
 
 	syscalls_free();
-
-	log_close();
 
 	return;
 

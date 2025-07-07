@@ -27,12 +27,16 @@ int seccomp_restrict(){
 
 	/* check if seccomp is allowed */
 	if(prctl(PR_GET_SECCOMP) != 0){
-		log_error("seccomp is already enabled\n");
+		log_error("seccomp is already enabled");
 		return 1;
 	};
 
 	/* construct bpf's for seccomp */
 	struct sock_filter *bpf_filters = malloc((2 * (numsyscalls + 1)) * sizeof(struct sock_filter));
+	if(bpf_filters == NULL){
+		log_error("malloc() failed (%s)", strerror(errno));
+		return 1;
+	};
 
 	/* load syscall number */
 	bpf_filters[0] = (struct sock_filter) BPF_STMT(BPF_LD | BPF_W | BPF_ABS, (offsetof(struct seccomp_data, nr)));
@@ -53,13 +57,17 @@ int seccomp_restrict(){
 
 	/* set no_new_privs in case it's not already set so seccomp doesn't fail */
 	if(prctl(PR_SET_NO_NEW_PRIVS, 1, 0, 0, 0) == -1){
-		log_error("prctl(PR_SET_NO_NEW_PRIVS, 1) failed: %s\n", strerror(errno));
+		log_error("prctl(PR_SET_NO_NEW_PRIVS, 1) failed (%s)", strerror(errno));
 		return 1;
 	};
 
+	/* do necessary cleanup before potentially restricting close(2) */
+	log_close();
+
 	/* make the call */
 	if(syscall(SYS_seccomp, SECCOMP_SET_MODE_FILTER, 0, &bpf_program) != 0){
-		log_error("seccomp syscall failed: %s\n", strerror(errno));
+		log_init();
+		log_error("seccomp syscall failed (%s)", strerror(errno));
 		return 1;
 	};
 
