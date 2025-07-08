@@ -14,3 +14,9 @@ p = angr.Project('/usr/lib64/libc.so.6', load_options={ 'auto_load_libs': True }
 #  (this is static so that all possible paths are considered, dynamic would
 #   freak out)
 cfg = p.analyses.CFGFast();
+
+# recover function call graph from control flow graph
+cg = cfg.functions.callgraph;
+
+for addr in cg.nodes:
+	print(cfg.functions.function(addr).name);
