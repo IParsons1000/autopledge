@@ -14,7 +14,7 @@
 
 const syscall_by_fun_t glibc_syscalls_by_fun[] = {
 	#include GLIBC_SYSCALL_BY_FUN_FILE
-	{ "elf_load", (int *)&(int []){ SYS_open, SYS_openat, SYS_read, SYS_lseek, SYS_getpid, SYS_fstat, SYS_close, SYS_exit, SYS_exit_group, SYS_write, SYS_socket, -1 } },
+//	{ "elf_load", (int *)&(int []){ SYS_open, SYS_openat, SYS_read, SYS_lseek, SYS_getpid, SYS_fstat, SYS_close, SYS_exit, SYS_exit_group, SYS_write, SYS_socket, -1 } },
 	{ NULL, NULL }
 };
 

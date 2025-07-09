@@ -41,8 +41,15 @@ cg = cfg.functions.callgraph;
 if not cg:
 	sys.exit(1);
 
-# prepare regex for deleting sub_*
-nosub = re.compile(r'^sub_.*$');
+# prepare regex for deleting sys_*
+nosys = re.compile(r'^sys_.*$');
+nofail = re.compile(r'^__.*fail.*');
+
+# prune cases where the application would be killed anyway, that lead to risky
+#  syscalls like execve(2)
+for i in cg.copy().nodes:
+	if nofail.match(cfg.functions.function(i).name):
+		cg.remove_node(i);
 
 with open(ofile, 'w') as f:
 
@@ -52,20 +59,24 @@ with open(ofile, 'w') as f:
 		if s.is_function and not s.is_local and cfg.functions.function(name=s.name):
 
 			# create subgraph from function
-			sg = cg.subgraph(networkx.single_source_shortest_path(cg, cfg.functions.function(name=s.name).addr).keys());
+			try:
+				sg = cg.subgraph(networkx.single_source_shortest_path(cg, cfg.functions.function(name=s.name).addr).keys());
 
-			# locate nodes at the end of the line
-			calls = [];
-			for n, d in sg.out_degree():
-				if (d == 0) and cfg.functions.function(n).is_syscall:
-					calls.append(cfg.functions.function(n).name.split("@")[0]);
-			calls = [ i for i in calls if not nosub.match(i) ];
+				# locate nodes at the end of the line
+				calls = [];
+				for n, d in sg.out_degree():
+					if (d == 0) and cfg.functions.function(n).is_syscall:
+						calls.append(cfg.functions.function(n).name.split("@")[0]);
+				calls = [ i for i in calls if not nosys.match(i) ];
 
-			# convert syscall names to syscall.h macro format
-			for i, call in enumerate(calls):
-				calls[i] = "SYS_" + call;
+				# convert syscall names to syscall.h macro format
+				for i, call in enumerate(calls):
+					calls[i] = "SYS_" + call;
 
-			# format for header file insertion
-			arrent = "{  \"" + s.name.split("@")[0] + "\" , (int *)&(int []){ " + ", ".join(calls) + ", -1 } },";
+				# format for header file insertion
+				arrent = "{  \"" + s.name.split("@")[0] + "\" , (int *)&(int []){ " + ", ".join(calls) + ", -1 } },";
 
-			if calls: print(arrent, file=f);
+				if calls: print(arrent, file=f);
+			except:
+				continue;
+
