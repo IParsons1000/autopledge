@@ -6,7 +6,7 @@
 TOOLDIR := ./tools
 
 # individual tools names
-TOOLS := glibc-get-syscalls
+TOOLS := so-get-syscalls glibc-get-syscalls
 TOOLS-CLEAN := $(addsuffix -clean,$(TOOLS))
 TOOLS-SPOTLESS := $(addsuffix -spotless,$(TOOLS))
 
@@ -14,17 +14,25 @@ TOOLS-SPOTLESS := $(addsuffix -spotless,$(TOOLS))
 
 tools-all: tools-spotless $(TOOLS)
 
-glibc-get-syscalls: $(TOOLDIR)/glibc-get-syscalls.py
+so-get-syscalls: $(TOOLDIR)/so-get-syscalls.py
 	python3 -m venv $(TOOLDIR)/angr
+
+glibc-get-syscalls: so-get-syscalls
 	. $(TOOLDIR)/angr/bin/activate && \
 	python3 -m pip install angr && \
-	$(TOOLDIR)/glibc-get-syscalls.py
+	$(TOOLDIR)/so-get-syscalls.py /usr/lib64/libc.so.6 > $(TOOLDIR)/glibc-syscalls-per-function
+	cat $(TOOLDIR)/glibc-syscalls-per-function | sed 's/$$/,/' > $(TOOLDIR)/glibc-syscalls-per-function
 
 tools-clean: $(TOOLS-CLEAN)
 
-glibc-get-syscalls-clean:
+so-get-syscalls-clean:
 	-rm -rf $(TOOLDIR)/angr
+
+glibc-get-syscalls-clean: so-get-syscalls-clean
 
 tools-spotless: tools-clean $(TOOLS-SPOTLESS)
 
-glibc-get-syscalls-spotless:
+so-get-syscalls-spotless: so-get-syscalls-clean
+
+glibc-get-syscalls-spotless: glibc-get-syscalls-clean so-get-syscalls-spotless
+#	-rm -rf $(TOOLDIR)/glibc-syscalls-per-function

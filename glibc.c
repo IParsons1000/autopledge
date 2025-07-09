@@ -8,16 +8,14 @@
 #include <string.h>
 #include "glibc.h"
 
-#define GLIBC_NUM_FUNS 5+1
+#ifndef GLIBC_SYSCALL_BY_FUN_FILE
+#define GLIBC_SYSCALL_BY_FUN_FILE "tools/glibc-syscalls-per-function"
+#endif /* GLIBC_SYSCALL_BY_FUN_FILE */
 
-const syscall_by_fun_t glibc_syscalls_by_fun[GLIBC_NUM_FUNS] = {
-	{ "printf", (int *)&(int []){ SYS_open, -1 } },
-	{ "scanf",  (int *)&(int []){ SYS_open, SYS_read, -1 } },
-	{ "open",   (int *)&(int []){ SYS_open, -1 } },
-	{ "open64", (int *)&(int []){ SYS_open, -1 } },
-	{ "read",   (int *)&(int []){ SYS_read, -1 } },
-//temp
-	{ "elf_load", (int *)&(int []){ SYS_open, SYS_openat, SYS_read, SYS_lseek, SYS_getpid, SYS_fstat, SYS_close, SYS_exit, SYS_exit_group, SYS_write, SYS_socket, -1 } }
+const syscall_by_fun_t glibc_syscalls_by_fun[] = {
+	#include GLIBC_SYSCALL_BY_FUN_FILE
+	{ "elf_load", (int *)&(int []){ SYS_open, SYS_openat, SYS_read, SYS_lseek, SYS_getpid, SYS_fstat, SYS_close, SYS_exit, SYS_exit_group, SYS_write, SYS_socket, -1 } },
+	{ NULL, NULL }
 };
 
 char **glibc_get_syscalls(char **funs);
@@ -29,7 +27,7 @@ char **glibc_get_syscalls(char **funs){
 	};
 
 	for(int i = 0; funs[i] != NULL; i++){
-		for(int j = 0; j < GLIBC_NUM_FUNS; j++){
+		for(int j = 0; glibc_syscalls_by_fun[j].fun != NULL; j++){
 			if(!strcmp(funs[i], glibc_syscalls_by_fun[j].fun)){
 				syscalls_add(glibc_syscalls_by_fun[j].syscalls);
 				break;
