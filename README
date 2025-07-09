@@ -3,27 +3,107 @@ auto-pledge
 
 automatically sandbox syscalls available to vulnerable programs
 
+What?
+-----
+
 auto-pledge automatically detects and whitelists syscalls used by a program
 at runtime, restricting potential injected shellcode
 
-Usage
------
+Why?
+----
+
+How?
+----
+
+### Dependencies
+
+autopledge requires the following to build and run successfully:
+
+> - **cc** (tested on **gcc** and **clang**)
+> - **glibc**
+> - **linux** (>=3.17)
+
+If you plan on utilizing the optional build tools, you will also need:
+
+> - **python** (>=3.10)
+
+### Building
+
+To run the _optional_ build tools and customize the list of glibc syscalls by
+function to your system, run:
 
 ```
-$ LD_PRELOAD=libautopledge.so <program>
+$ make tools
 ```
 
-Build
------
+To build autopledge, run:
 
 ```
-make all
-make test
+$ make all
 ```
 
-Install
--------
+#### Advanced Configuration
+
+The build may be customized by providing values on the command line:
 
 ```
-sudo make install
+$ make <setting>=<value> all
 ```
+
+By default, autopledge uses syslog for logging (USE_SYSLOG=1).  The
+alternatives provided are logging to stderr (USE_STDERR=1) and disabling
+logging (USE_NOLOGS=1).
+
+By default, processes that have been started using autopledge are killed if a
+non-enabled system call is performed.  A trap signal may be sent instead via
+LENIENT=1.
+
+The name of the outputted binary (default: `libautopledge.so`) may be set with
+AUTOPLEDGE=<name>.
+
+### Testing (optional)
+
+To test your build, run:
+
+```
+$ make test
+```
+
+The results of the tests will be printed to the screen, but they are also
+recorded in `test/test-results`.  An 'S' indicates success, and 'F' indicates
+failure.
+
+If a test fails, a log of errors is located in `test/<test name>/<test name>.log`.
+
+#### Advanced Configuration
+
+The file that test results are sent to (default: `test/test-results`) may be
+customized with TESTFILE=<file>.
+
+Individual tests may be run with:
+
+```
+$ make <test-name>
+```
+
+### Installing
+
+To install autopledge on your system, run:
+
+```
+$ sudo make install
+```
+
+#### Advanced Configuration
+
+By default, autopledge is installed to `/usr/lib64`.  The prefix
+(default: `/usr`) may be set with PREFIX=<path>, and the entire destination
+folder may be changed by setting LIBDIR=<path>.
+
+Who?
+----
+
+autopledge was created by Ira Parsons <iparsons1000@gmail.com> as part of the
+Summer 2025 CTF High School Internship program at Arizona State University.
+
+autopledge is distributed under the BSD 3-Clause open source license.
