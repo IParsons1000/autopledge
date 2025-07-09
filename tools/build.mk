@@ -19,8 +19,8 @@ so-get-syscalls: $(TOOLDIR)/so-get-syscalls.py
 
 glibc-get-syscalls: so-get-syscalls
 	. $(TOOLDIR)/angr/bin/activate && \
-	python3 -m pip install angr && \
-	$(TOOLDIR)/so-get-syscalls.py /usr/lib64/libc.so.6 > $(TOOLDIR)/glibc-syscalls-per-function
+	python3 -m pip install angr tqdm && \
+	$(TOOLDIR)/so-get-syscalls.py /usr/lib64/libc.so.6 $(TOOLDIR)/glibc-syscalls-per-function
 
 tools-clean: $(TOOLS-CLEAN)
 

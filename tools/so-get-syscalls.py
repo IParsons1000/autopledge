@@ -9,10 +9,17 @@ import angr
 import networkx
 import sys
 import re
+import tqdm
 
 # validate command line arguments
 if not sys.argv[1]:
 	sys.exit(1);
+
+ofile = '';
+if not sys.argv[2]:
+	ofile = '/dev/stdout';
+else:
+	ofile = sys.argv[2];
 
 # load so and linked libs
 p = angr.Project(sys.argv[1], load_options={ 'auto_load_libs': True });
@@ -23,7 +30,7 @@ if not p:
 # create a control flow graph for so
 #  (this is static so that all possible paths are considered, dynamic would
 #   freak out)
-cfg = p.analyses.CFGFast();
+cfg = p.analyses.CFGFast(None, show_progressbar=True);
 
 if not cfg:
 	sys.exit(1);
@@ -37,26 +44,28 @@ if not cg:
 # prepare regex for deleting sub_*
 nosub = re.compile(r'^sub_.*$');
 
-# find syscalls required for all outward-facing so functions
-for s in list(set(list(p.loader.symbols))):
+with open(ofile, 'w') as f:
 
-	if s.is_function and not s.is_local and cfg.functions.function(name=s.name):
+	# find syscalls required for all outward-facing so functions
+	for s in tqdm.tqdm(list(set(list(p.loader.symbols)))):
 
-		# create subgraph from function
-		sg = cg.subgraph(networkx.single_source_shortest_path(cg, cfg.functions.function(name=s.name).addr).keys());
+		if s.is_function and not s.is_local and cfg.functions.function(name=s.name):
 
-		# locate nodes at the end of the line
-		calls = [];
-		for n, d in sg.out_degree():
-			if (d == 0) and cfg.functions.function(n).is_syscall:
-				calls.append(cfg.functions.function(n).name.split("@")[0]);
-		calls = [ i for i in calls if not nosub.match(i) ];
+			# create subgraph from function
+			sg = cg.subgraph(networkx.single_source_shortest_path(cg, cfg.functions.function(name=s.name).addr).keys());
 
-		# convert syscall names to syscall.h macro format
-		for i, call in enumerate(calls):
-			calls[i] = "SYS_" + call;
+			# locate nodes at the end of the line
+			calls = [];
+			for n, d in sg.out_degree():
+				if (d == 0) and cfg.functions.function(n).is_syscall:
+					calls.append(cfg.functions.function(n).name.split("@")[0]);
+			calls = [ i for i in calls if not nosub.match(i) ];
 
-		# format for header file insertion
-		arrent = "{  \"" + s.name.split("@")[0] + "\" , (int *)&(int []){ " + ", ".join(calls) + ", -1 } },";
+			# convert syscall names to syscall.h macro format
+			for i, call in enumerate(calls):
+				calls[i] = "SYS_" + call;
 
-		if calls: print(arrent);
+			# format for header file insertion
+			arrent = "{  \"" + s.name.split("@")[0] + "\" , (int *)&(int []){ " + ", ".join(calls) + ", -1 } },";
+
+			if calls: print(arrent, file=f);
