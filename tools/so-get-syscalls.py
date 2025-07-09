@@ -57,6 +57,6 @@ for s in list(set(list(p.loader.symbols))):
 			calls[i] = "SYS_" + call;
 
 		# format for header file insertion
-		arrent = "{  \"" + s.name + "\" , (int *)&(int []){ " + ", ".join(calls) + ", -1 } }";
+		arrent = "{  \"" + s.name + "\" , (int *)&(int []){ " + ", ".join(calls) + ", -1 } },";
 
 		if calls: print(arrent);
