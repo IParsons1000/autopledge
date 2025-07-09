@@ -34,8 +34,8 @@ cg = cfg.functions.callgraph;
 if not cg:
 	sys.exit(1);
 
-# prepare regex for deleting sys_*
-regex = re.compile(r'^sys_.*$');
+# prepare regex for deleting sub_*
+nosub = re.compile(r'^sub_.*$');
 
 # find syscalls required for all outward-facing so functions
 for s in list(set(list(p.loader.symbols))):
@@ -49,14 +49,14 @@ for s in list(set(list(p.loader.symbols))):
 		calls = [];
 		for n, d in sg.out_degree():
 			if (d == 0) and cfg.functions.function(n).is_syscall:
-				calls.append(cfg.functions.function(n).name);
-		calls = [ i for i in calls if not regex.match(i) ];
+				calls.append(cfg.functions.function(n).name.split("@")[0]);
+		calls = [ i for i in calls if not nosub.match(i) ];
 
 		# convert syscall names to syscall.h macro format
 		for i, call in enumerate(calls):
 			calls[i] = "SYS_" + call;
 
 		# format for header file insertion
-		arrent = "{  \"" + s.name + "\" , (int *)&(int []){ " + ", ".join(calls) + ", -1 } },";
+		arrent = "{  \"" + s.name.split("@")[0] + "\" , (int *)&(int []){ " + ", ".join(calls) + ", -1 } },";
 
 		if calls: print(arrent);

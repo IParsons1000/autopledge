@@ -29,10 +29,6 @@ COPTS += -DUSE_SYSLOG
 endif
 CFLAGS += $(COPTS)
 
-# module build files (provides `*-all', `*-clean', and `*-spotless')
-include test/build.mk
-include tools/build.mk
-
 .PHONY: all test tools install uninstall clean spotless
 
 all: $(AUTOPLEDGE)
@@ -54,6 +50,10 @@ seccomp.o: seccomp.c
 
 glibc.o: glibc.c
 	$(CC) $(CFLAGS) -c glibc.c
+
+# module build files (provides `*-all', `*-clean', and `*-spotless')
+include test/build.mk
+include tools/build.mk
 
 test: all test-all
 
