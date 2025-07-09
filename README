@@ -1,4 +1,4 @@
-auto-pledge
+autopledge
 ===========
 
 automatically sandbox syscalls available to vulnerable programs
@@ -6,8 +6,23 @@ automatically sandbox syscalls available to vulnerable programs
 What?
 -----
 
-auto-pledge automatically detects and whitelists syscalls used by a program
-at runtime, restricting potential injected shellcode
+```
+$ LD_PRELOAD=libautopledge.so <program>
+```
+
+autopledge statically detects and whitelists the system calls a program needs
+at runtime, mitigating the risk of harm from injected shellcode.
+
+autopledge is implemented as a constructor in a preloaded shared library,
+allowing it to run after the program is loaded, but before execution begins.
+
+The system calls a program needs to function are detected via the calls the
+program makes to dynamically linked libraries, before being restricted with
+linux's built-in seccomp(2) facilities.
+
+If the process executes an unexpected system call during runtime (for example
+the `execve` of a shell spawn), the process is killed to prevent potentially
+injected code from harming the system.
 
 Why?
 ----
@@ -50,16 +65,16 @@ The build may be customized by providing values on the command line:
 $ make <setting>=<value> all
 ```
 
-By default, autopledge uses syslog for logging (USE_SYSLOG=1).  The
-alternatives provided are logging to stderr (USE_STDERR=1) and disabling
-logging (USE_NOLOGS=1).
+By default, autopledge uses syslog for logging (`USE_SYSLOG=1`).  The
+alternatives provided are logging to stderr (`USE_STDERR=1`) and disabling
+logging (`USE_NOLOGS=1`).
 
 By default, processes that have been started using autopledge are killed if a
 non-enabled system call is performed.  A trap signal may be sent instead via
-LENIENT=1.
+`LENIENT=1`.
 
 The name of the outputted binary (default: `libautopledge.so`) may be set with
-AUTOPLEDGE=<name>.
+`AUTOPLEDGE=<name>`.
 
 ### Testing (optional)
 
@@ -78,7 +93,7 @@ If a test fails, a log of errors is located in `test/<test name>/<test name>.log
 #### Advanced Configuration
 
 The file that test results are sent to (default: `test/test-results`) may be
-customized with TESTFILE=<file>.
+customized with `TESTFILE=<file>`.
 
 Individual tests may be run with:
 
@@ -97,13 +112,13 @@ $ sudo make install
 #### Advanced Configuration
 
 By default, autopledge is installed to `/usr/lib64`.  The prefix
-(default: `/usr`) may be set with PREFIX=<path>, and the entire destination
-folder may be changed by setting LIBDIR=<path>.
+(default: `/usr`) may be set with `PREFIX=<path>`, and the entire destination
+folder may be changed by setting `LIBDIR=<path>`.
 
 Who?
 ----
 
-autopledge was created by Ira Parsons <iparsons1000@gmail.com> as part of the
+autopledge was created by Ira Parsons \<<iparsons1000@gmail.com>\> as part of the
 Summer 2025 CTF High School Internship program at Arizona State University.
 
 autopledge is distributed under the BSD 3-Clause open source license.  More
