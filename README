@@ -27,6 +27,33 @@ injected code from harming the system.
 Why?
 ----
 
+In March 2016, OpenBSD 5.9 introduced the pledge(2) system call as a mitigation
+feature against arbitrary code execution and privilege abuse.  pledge(2) is a
+declaration made by the program at the beginning of execution to only use system
+calls from certain categories (e.g., `stdio`, `inet`).  If the program violates
+its pledge, it is killed.
+
+Unfortunately, to add support for this to a program, not only must the program
+be modifiable (unviable for proprietary or restrictively licensed software), but
+the programmer must also know which system calls they need to allow.
+
+The Linux equivalent of pledge(2) is seccomp(2), which allows much finer system
+call filtering, is much more difficult to use, and suffers from the same
+problem: the program must be modifiable, and the programmer must know which
+system calls the program uses.
+
+While the majority of Linux software may be open-source, proprietary software
+often presents even more of a security risk (cf. thousand eyes/shallow bugs),
+especially legacy software that is past end-of-life and/or internet-facing
+software.  Even in open source programs it is often impractical to manually
+determine the necessary system calls by hand.
+
+autopledge is designed to make running vulnerable binaries safer by restricting
+the abilities of injected shellcode with system call filtering constructed from
+static analysis of the program.  autopledge will not prevent shellcode injection
+and it is not guaranteed to prevent shellcode from causing harm to a system, but
+it presents a first line of defence against exploitation.
+
 How?
 ----
 
