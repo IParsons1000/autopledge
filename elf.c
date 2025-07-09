@@ -21,6 +21,7 @@ dyn_handler_t dyn_handler[DYN_NUM_HANDLERS] = {
 elf_t *elf_load(char *file);
 char **elf_get_dynsym(elf_t *elf);
 void elf_get_dyn_syscalls(elf_t *elf);
+void elf_get_lib_dyn_syscalls(char *lib);
 void elf_free(elf_t *elf);
 
 elf_t *elf_load(char *file){
@@ -343,16 +344,43 @@ char **elf_get_dynsym(elf_t *elf){
 
 void elf_get_dyn_syscalls(elf_t *elf){
 
+	if(!elf->numneeded || elf->needed == NULL){
+		return;
+	};
+
 	char **dynsyms = elf_get_dynsym(elf);
 
 	for(int i = 0; i < elf->numneeded; i++){
+		char done = 0;
 		for(int j = 0; j < DYN_NUM_HANDLERS; j++){
 			if(!strcmp(elf->needed[i], dyn_handler[j].obj)){
+				done++;
 				dynsyms = (*dyn_handler[j].handler)(dynsyms);
 				break;
 			};
 		};
+
+		if(!done){
+			elf_get_lib_dyn_syscalls(elf->needed[i]);
+		};
 	};
+
+	return;
+
+};
+
+void elf_get_lib_dyn_syscalls(char *lib){
+
+	elf_t *bin;
+
+	bin = elf_load(lib);
+	if(bin == NULL){
+		return;
+	};
+
+	elf_get_dyn_syscalls(bin);
+
+	elf_free(bin);
 
 	return;
 
