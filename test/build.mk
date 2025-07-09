@@ -3,7 +3,6 @@
 # autopledge test suite - master makefile
 #
 
-TOP := $(PWD)
 TESTDIR := ./test
 TESTFILE ?= $(TESTDIR)/test-results
 
@@ -15,7 +14,7 @@ TESTS-SPOTLESS := $(addsuffix -spotless,$(TESTS))
 # individual test build files (provides test-* and poc-*)
 include test/*/build.mk
 
-.PHONY: test-all test-clean test-spotless
+.PHONY: test-all test-clean test-spotless $(TESTS-CLEAN) $(TESTS-SPOTLESS)
 
 test-all: test-spotless $(TESTS)
 	@cat $(TESTFILE)

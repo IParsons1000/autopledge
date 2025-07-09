@@ -5,6 +5,7 @@
 
 # custom config
 AUTOPLEDGE ?= libautopledge.so
+TOP ?= $(PWD)
 PREFIX ?= /usr
 LIBDIR ?= $(PREFIX)/lib64
 
@@ -28,10 +29,7 @@ COPTS += -DUSE_SYSLOG
 endif
 CFLAGS += $(COPTS)
 
-# module build files (provides `test-all', `test-clean', and `test-spotless')
-include test/build.mk
-
-.PHONY: all test install uninstall clean spotless
+.PHONY: all test tools install uninstall clean spotless
 
 all: $(AUTOPLEDGE)
 
@@ -53,7 +51,13 @@ seccomp.o: seccomp.c
 glibc.o: glibc.c
 	$(CC) $(CFLAGS) -c glibc.c
 
+# module build files (provides `*-all', `*-clean', and `*-spotless')
+include test/build.mk
+include tools/build.mk
+
 test: all test-all
+
+tools: tools-all
 
 install: all
 	install $(AUTOPLEDGE) $(LIBDIR)
@@ -61,8 +65,8 @@ install: all
 uninstall:
 	rm -f $(LIBDIR)/$(AUTOPLEDGE)
 
-clean: test-clean
+clean: test-clean tools-clean
 	-rm -f *.o
 
-spotless: test-spotless
+spotless: test-spotless tools-spotless
 	-rm -f $(AUTOPLEDGE) *.o
