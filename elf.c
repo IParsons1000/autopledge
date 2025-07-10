@@ -191,12 +191,15 @@ elf_t *elf_load(char *file){
 
 	/* locate .dynamic and relocation sections */
 
-	int i;
+	int dyn = -1;
 	int numrelo = 0;
 	int *relo = NULL;
-	for(i = 0; i < (elf->ehdr.e_shnum + 1); i++){
+	int plt = -1;
+	int got = -1;
+	int text = -1;
+	for(int i = 0; i < (elf->ehdr.e_shnum + 1); i++){
 		if(elf->shdr[i].sh_type == SHT_DYNAMIC){
-			break;
+			dyn = i;
 		};
 
 		if(elf->shdr[i].sh_type == SHT_RELA){
@@ -205,8 +208,19 @@ elf_t *elf_load(char *file){
 			relo[numrelo-1] = i;
 		};
 
+		if(elf->shdr[i].sh_type == SHT_PROGBITS && !strcmp(&(elf->secs[elf->ehdr.e_shstrndx][elf->shdr[i].sh_name]), ".plt")){
+			plt = i;
+		};
+
+		if(elf->shdr[i].sh_type == SHT_PROGBITS && !strcmp(&(elf->secs[elf->ehdr.e_shstrndx][elf->shdr[i].sh_name]), ".got.plt")){
+			got = i;
+		};
+
+		if(elf->shdr[i].sh_type == SHT_PROGBITS && !strcmp(&(elf->secs[elf->ehdr.e_shstrndx][elf->shdr[i].sh_name]), ".text")){
+			text = i;
+		};
+
 		if(i == elf->ehdr.e_shnum){
-			i = -1;
 			break;
 		};
 	};
@@ -216,23 +230,36 @@ elf_t *elf_load(char *file){
 		log_note("no relocation sections found in file %s", elf->name);
 	};
 
+	if(plt == -1){
+		log_note("no procedure linkage table found in file %s", elf->name);
+	};
+
+	if(got == -1){
+		log_note("no global offset table found in file %s", elf->name);
+	};
+
+	if(text == -1){
+		log_note("no .text section found in file %s", elf->name);
+	};
+
+	elf->dynamic = dyn;
 	elf->numrelo = numrelo;
 	elf->relo = relo;
+	elf->plt = plt;
+	elf->got = got;
+	elf->text = text;
 
-	if(i == -1){
+	if(elf->dynamic == -1){
 		log_note("no .dynamic section found in file %s", elf->name);
-		elf->dynamic = -1;
 	}
 	else{
-		elf->dynamic = i;
-
 		/* locate .dynsym and .dynstr section */
 
 		int dsymi = -1;
 		int dstri = -1;
 		Elf64_Dyn *dynamic = (Elf64_Dyn *)elf->secs[elf->dynamic];
 
-		for(int k = 0; k < (int)(elf->shdr[i].sh_size / elf->shdr[i].sh_entsize); k++){
+		for(int k = 0; k < (int)(elf->shdr[elf->dynamic].sh_size / elf->shdr[elf->dynamic].sh_entsize); k++){
 			if(dynamic[k].d_tag == DT_SYMTAB){
 				for(int a = 0; a < elf->ehdr.e_shnum; a++){
 					if(elf->shdr[a].sh_addr == dynamic[k].d_un.d_ptr){
@@ -395,6 +422,10 @@ char **elf_get_lib_dyn_syscalls(char *lib, char **dynsyms){
 		return dynsyms;
 	};
 
+	if(bin->dynsym == -1 || bin->dynstr == -1 || !bin->numrelo || bin->plt == -1 || bin->got == -1 || bin->text == -1){
+		return dynsyms;
+	};
+
 	Elf64_Sym *dynsymsec = (Elf64_Sym *)bin->secs[bin->dynsym];
 	char *dynstrsec = (char *)bin->secs[bin->dynstr];
 
@@ -448,16 +479,48 @@ char **elf_get_lib_dyn_syscalls(char *lib, char **dynsyms){
 						};
 					};
 
-					if(found){
+					if(found && bin->text != -1){
 						//search for calls
-						end=end;
+						int plt_start = bin->shdr[bin->plt].sh_addr;
+						int plt_end = plt_start + bin->shdr[bin->plt].sh_size;
+						int *plt_call = NULL;
+						int num_plt_calls = 0;
+
+						for(int x = start; x < end; x++){
+							int rel_addr = x-bin->shdr[bin->text].sh_addr;
+							if(bin->secs[bin->text][rel_addr] == (char)0xe8){
+								/* 0xe8 = call */
+								uint32_t maybe = (uint32_t)(x + *((int32_t *)&(bin->secs[bin->text][++rel_addr])) - 0xb); /* mitigation for: all are off by 0xb ??? */
+								if(maybe >= (uint32_t)plt_start && maybe <= (uint32_t)plt_end){
+									plt_call = realloc(plt_call, ++num_plt_calls * sizeof(int));
+									plt_call[num_plt_calls-1] = maybe;
+									x += 3;
+								};
+							};
+						};
+
+						if(plt_call != NULL){
+							for(int x = 0; x < num_plt_calls; x++){
+								//find got entry addr for plt entry
+								/* jmp a d d r <@plt>   <--- significant one
+								 * push v a l ue
+								 * jmp a d d r <@.text>
+								 */
+								uint8_t *plt = (uint8_t *)&(bin->secs[bin->plt][plt_call[x]-bin->shdr[bin->plt].sh_addr]);
+								if(((uint16_t *)plt)[0] == 0x25ff){
+									/* 0x25ff = jmp */
+									//get got entry
+									uint64_t *got = (uint64_t *)&(bin->secs[bin->got][(plt_call[x]+*((uint32_t *)&(plt[2])))-bin->shdr[bin->got].sh_addr+6]); /* mitigation for: all are off by 6 ??? */
+									got=got;
+								};
+
+							};
+						};
 					};
 				};
 			};
 		};
 	};
-
-	elf_get_dyn_syscalls(bin);
 
 	elf_free(bin);
 

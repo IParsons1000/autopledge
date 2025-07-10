@@ -28,6 +28,9 @@ typedef struct elf_s {
 	int numneeded;     /* number of needed so's */
 	int *relo;         /* array of shdr indices of relocation sections */
 	int numrelo;       /* number of relocation sections */
+	int plt;           /* shdr index of .plt section */
+	int got;           /* shdr index of .got.plt section */
+	int text;          /* shdr index of .text section */
 } elf_t;
 
 typedef struct dyn_handler_s {
