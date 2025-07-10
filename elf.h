@@ -15,17 +15,19 @@ extern "C" {
 #include <elf.h>
 
 typedef struct elf_s {
-	char *name;       /* file name (for diagnostic messages) */
-	Elf64_Ehdr ehdr;  /* elf header */
-	Elf64_Phdr *phdr; /* array ofprogram headers */
-	Elf64_Shdr *shdr; /* array of section headers */
-	char **segs;      /* array of raw contents of segments */
-	char **secs;      /* array of raw contents of sections */
-	int dynamic;      /* shdr index of .dynamic section */
-	int dynsym;       /* shdr index of .dynsym section */
-	int dynstr;       /* shdr index of .dynstr section */
-	char **needed;    /* array of names of needed so's */
-	int numneeded;    /* number of needed so's */
+	char *name;        /* file name (for diagnostic messages) */
+	Elf64_Ehdr ehdr;   /* elf header */
+	Elf64_Phdr *phdr;  /* array ofprogram headers */
+	Elf64_Shdr *shdr;  /* array of section headers */
+	char **segs;       /* array of raw contents of segments */
+	char **secs;       /* array of raw contents of sections */
+	int dynamic;       /* shdr index of .dynamic section */
+	int dynsym;        /* shdr index of .dynsym section */
+	int dynstr;        /* shdr index of .dynstr section */
+	char **needed;     /* array of names of needed so's */
+	int numneeded;     /* number of needed so's */
+	int *relo;         /* array of shdr indices of relocation sections */
+	int numrelo;       /* number of relocation sections */
 } elf_t;
 
 typedef struct dyn_handler_s {

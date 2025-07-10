@@ -21,7 +21,7 @@ dyn_handler_t dyn_handler[DYN_NUM_HANDLERS] = {
 elf_t *elf_load(char *file);
 char **elf_get_dynsym(elf_t *elf);
 void elf_get_dyn_syscalls(elf_t *elf);
-void elf_get_lib_dyn_syscalls(char *lib);
+char **elf_get_lib_dyn_syscalls(char *lib, char **dynsym);
 void elf_free(elf_t *elf);
 
 elf_t *elf_load(char *file){
@@ -189,12 +189,20 @@ elf_t *elf_load(char *file){
 		};
 	};
 
-	/* locate .dynamic section */
+	/* locate .dynamic and relocation sections */
 
 	int i;
+	int numrelo = 0;
+	int *relo = NULL;
 	for(i = 0; i < (elf->ehdr.e_shnum + 1); i++){
 		if(elf->shdr[i].sh_type == SHT_DYNAMIC){
 			break;
+		};
+
+		if(elf->shdr[i].sh_type == SHT_RELA){
+			numrelo++;
+			relo = realloc(relo, numrelo * sizeof(int));
+			relo[numrelo-1] = i;
 		};
 
 		if(i == elf->ehdr.e_shnum){
@@ -202,6 +210,14 @@ elf_t *elf_load(char *file){
 			break;
 		};
 	};
+
+
+	if(!numrelo || relo == NULL){
+		log_note("no relocation sections found in file %s", elf->name);
+	};
+
+	elf->numrelo = numrelo;
+	elf->relo = relo;
 
 	if(i == -1){
 		log_note("no .dynamic section found in file %s", elf->name);
@@ -361,7 +377,8 @@ void elf_get_dyn_syscalls(elf_t *elf){
 		};
 
 		if(!done){
-			elf_get_lib_dyn_syscalls(elf->needed[i]);
+
+			dynsyms = elf_get_lib_dyn_syscalls(elf->needed[i], dynsyms);
 		};
 	};
 
@@ -369,20 +386,82 @@ void elf_get_dyn_syscalls(elf_t *elf){
 
 };
 
-void elf_get_lib_dyn_syscalls(char *lib){
+char **elf_get_lib_dyn_syscalls(char *lib, char **dynsyms){
 
 	elf_t *bin;
 
 	bin = elf_load(lib);
 	if(bin == NULL){
-		return;
+		return dynsyms;
+	};
+
+	Elf64_Sym *dynsymsec = (Elf64_Sym *)bin->secs[bin->dynsym];
+	char *dynstrsec = (char *)bin->secs[bin->dynstr];
+
+	/* assume that the number of symbols in a library will be greater than in the
+	 *  executable */
+	for(int i = 0; i < (int)(bin->shdr[bin->dynsym].sh_size / bin->shdr[bin->dynsym].sh_entsize); i++){
+		if( (dynsymsec[i].st_info & STT_FUNC) && ((dynsymsec[i].st_info >> 4) & STB_GLOBAL)){
+			for(int j = 0; dynsyms[j] != NULL; j++){
+				if(!strcmp(dynsyms[j], &(dynstrsec[dynsymsec[i].st_name]))){
+					// found the symbol: dynsymsec[i]
+					int start = 0, end = 0;
+					int found = 0;
+
+					/* locate symbol in relocation table */
+					for(int a = 0; a < bin->numrelo; a++){
+						Elf64_Rela *relos = (Elf64_Rela *)bin->secs[bin->relo[a]];
+						for(int b = 0; b < (int)(bin->shdr[bin->relo[a]].sh_size / bin->shdr[bin->relo[a]].sh_entsize); b++){
+							if((int)ELF64_R_SYM(relos[b].r_info) == i){
+								found = 1;
+
+								int a = relos[b].r_addend;
+								//int b = bin->phdr[0].p_vaddr;
+								//int p = relos[b].r_offset;
+								int s = dynsymsec[i].st_value;
+								//int z = dynsymsec[i].st_size;
+
+								switch(ELF64_R_TYPE(relos[b].r_info)){
+									case R_X86_64_GLOB_DAT:
+									case R_X86_64_JUMP_SLOT:
+										start = s;
+										break;
+									case R_X86_64_64:
+									case R_X86_64_32:
+									case R_X86_64_32S:
+									case R_X86_64_16:
+									case R_X86_64_8:
+										start = s + a;
+										break;
+									default:
+										found = 0;
+										break;
+								};
+
+								end = (found) ? (start + dynsymsec[i].st_size) : 0;
+								break;
+							};
+						};
+
+						if(found){
+							break;
+						};
+					};
+
+					if(found){
+						//search for calls
+						end=end;
+					};
+				};
+			};
+		};
 	};
 
 	elf_get_dyn_syscalls(bin);
 
 	elf_free(bin);
 
-	return;
+	return dynsyms;
 
 };
 
