@@ -1,4 +1,5 @@
-<!-- vim: syntax=Markdown -->
+<!--- vim: syntax=markdown
+-->
 
 autopledge
 ===========
@@ -8,7 +9,7 @@ automatically sandbox syscalls available to vulnerable programs
 What?
 -----
 
-```
+```console
 $ LD_PRELOAD=libautopledge.so <program>
 ```
 
@@ -80,13 +81,13 @@ some ifdefs, but that's still on the todo list.
 To run the _optional_ build tools and customize the list of glibc syscalls by
 function to your system, run:
 
-```
+```console
 $ make tools
 ```
 
 To build autopledge, run:
 
-```
+```console
 $ make all
 ```
 
@@ -94,7 +95,7 @@ $ make all
 
 The build may be customized by providing values on the command line:
 
-```
+```console
 $ make <setting>=<value> all
 ```
 
@@ -113,7 +114,7 @@ The name of the outputted binary (default: `libautopledge.so`) may be set with
 
 To test your build, run:
 
-```
+```console
 $ make test
 ```
 
@@ -130,7 +131,7 @@ customized with `TESTFILE=<file>`.
 
 Individual tests may be run with:
 
-```
+```console
 $ make <test-name>
 ```
 
@@ -138,7 +139,7 @@ $ make <test-name>
 
 To install autopledge on your system, run:
 
-```
+```console
 $ sudo make install
 ```
 
