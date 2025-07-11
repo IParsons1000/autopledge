@@ -422,103 +422,209 @@ char **elf_get_lib_dyn_syscalls(char *lib, char **dynsyms){
 		return dynsyms;
 	};
 
-	if(bin->dynsym == -1 || bin->dynstr == -1 || !bin->numrelo || bin->plt == -1 || bin->got == -1 || bin->text == -1){
+	if(bin->dynsym == -1 || bin->dynstr == -1 || !bin->numrelo || (bin->plt == -1 && bin->got == -1) || bin->text == -1 || !bin->numneeded){
 		return dynsyms;
 	};
 
 	Elf64_Sym *dynsymsec = (Elf64_Sym *)bin->secs[bin->dynsym];
 	char *dynstrsec = (char *)bin->secs[bin->dynstr];
 
-	/* assume that the number of symbols in a library will be greater than in the
-	 *  executable */
-	for(int i = 0; i < (int)(bin->shdr[bin->dynsym].sh_size / bin->shdr[bin->dynsym].sh_entsize); i++){
-		if( (dynsymsec[i].st_info & STT_FUNC) && ((dynsymsec[i].st_info >> 4) & STB_GLOBAL)){
-			for(int j = 0; dynsyms[j] != NULL; j++){
-				if(!strcmp(dynsyms[j], &(dynstrsec[dynsymsec[i].st_name]))){
-					// found the symbol: dynsymsec[i]
-					int start = 0, end = 0;
-					int found = 0;
+	int numdynsyms = 0;
+	for(int i = 0; dynsyms[i] != NULL; i++){
+		numdynsyms++;
+	};
 
-					/* locate symbol in relocation table */
-					for(int a = 0; a < bin->numrelo; a++){
-						Elf64_Rela *relos = (Elf64_Rela *)bin->secs[bin->relo[a]];
-						for(int b = 0; b < (int)(bin->shdr[bin->relo[a]].sh_size / bin->shdr[bin->relo[a]].sh_entsize); b++){
-							if((int)ELF64_R_SYM(relos[b].r_info) == i){
-								found = 1;
+	/* reconstruct table mapping call address to symbol.
+	 *  in most cases this will be call in .text -> plt entry -> got entry -> symbol,
+	 *  but if the library was compiled with -fno-plt then it will be .text -> got entry -> symbol
+	 */
+	char **libdynsyms = NULL; /* list of dynamic symbols (native and external) */
+	long *libdynaddr = NULL;  /* list of call addrs for each symbol */
+	int *libdynused = NULL;   /* which of these are called in our target functions */
+	int libdynnum = 0;
 
-								int a = relos[b].r_addend;
-								//int b = bin->phdr[0].p_vaddr;
-								//int p = relos[b].r_offset;
-								int s = dynsymsec[i].st_value;
-								//int z = dynsymsec[i].st_size;
+	long curr_addr = bin->shdr[bin->plt].sh_addr;
+	int pltorgot = (bin->plt == -1) ? bin->got : bin->plt;
+	long *working = NULL;
 
-								switch(ELF64_R_TYPE(relos[b].r_info)){
-									case R_X86_64_GLOB_DAT:
-									case R_X86_64_JUMP_SLOT:
-										start = s;
-										break;
-									case R_X86_64_64:
-									case R_X86_64_32:
-									case R_X86_64_32S:
-									case R_X86_64_16:
-									case R_X86_64_8:
-										start = s + a;
-										break;
-									default:
-										found = 0;
-										break;
-								};
+	for(int i = 0; i < (int)(bin->shdr[pltorgot].sh_size / bin->shdr[pltorgot].sh_entsize); i++){
+		curr_addr += bin->shdr[pltorgot].sh_entsize;
 
-								end = (found) ? (start + dynsymsec[i].st_size) : 0;
-								break;
+		libdynaddr = realloc(libdynaddr, ++libdynnum * sizeof(long));
+		if(libdynaddr == NULL){
+			log_error("realloc() failed (%s)", strerror(errno));
+			elf_free(bin);
+			return dynsyms;
+		};
+
+		libdynaddr[libdynnum-1] = curr_addr;
+
+		libdynused = realloc(libdynused, libdynnum * sizeof(int));
+		if(libdynused == NULL){
+			log_error("realloc() failed (%s)", strerror(errno));
+			free(libdynaddr);
+			elf_free(bin);
+			return dynsyms;
+		};
+
+		if(pltorgot == bin->plt){
+			/* jmp a d d r <@plt>   <--- significant one
+			 * push v a l ue
+			 * jmp a d d r <@.text>
+			 */
+			uint8_t *plt = (uint8_t *)&(bin->secs[bin->plt][(int)curr_addr-bin->shdr[bin->plt].sh_addr]);
+			working = realloc(working, libdynnum * sizeof(long));
+			if(working == NULL){
+				log_error("realloc() failed (%s)", strerror(errno));
+				free(libdynaddr);
+				free(libdynused);
+				elf_free(bin);
+				return dynsyms;
+			};
+			if(((uint16_t *)plt)[0] == 0x25ff){ /* jmp = 0x25ff */
+				working[libdynnum-1] = (int)curr_addr + *((uint32_t *)&(plt[2])) + 6; /* fix for unexplained off by 6 */
+			}
+			else{
+				working[libdynnum-1] = -1;
+			};
+		};
+	};
+
+	if(working == NULL){
+		working = libdynaddr;
+	};
+
+	libdynsyms = malloc(libdynnum * sizeof(char *));
+	if(libdynsyms == NULL){
+		log_error("malloc() failed (%s)", strerror(errno));
+		free(libdynaddr);
+		free(libdynused);
+		if(working != NULL){
+			free(working);
+		};
+		elf_free(bin);
+		return dynsyms;
+	};
+
+	memset(libdynused, 0, libdynnum * sizeof(int));
+
+	for(int i = 0; i < bin->numrelo; i++){
+		Elf64_Rela *relos = (Elf64_Rela *)bin->secs[bin->relo[i]];
+		for(int j = 0; j < (int)(bin->shdr[bin->relo[i]].sh_size / bin->shdr[bin->relo[i]].sh_entsize); j++){
+			for(int k = 0; k < libdynnum; k++){
+				if(relos[j].r_offset == (unsigned)working[k]){
+					if(dynsymsec[ELF64_R_SYM(relos[j].r_info)].st_value){
+						libdynsyms[k] = NULL;
+						dynsyms = realloc(dynsyms, (numdynsyms + 2) * sizeof(char *));
+						if(dynsyms == NULL){
+							log_error("realloc() failed (%s)", strerror(errno));
+							free(libdynaddr);
+							free(libdynused);
+							free(libdynsyms);
+							if(working != libdynaddr){
+								free(working);
 							};
+							elf_free(bin);
+							return dynsyms;
 						};
-
-						if(found){
-							break;
-						};
+						dynsyms[numdynsyms++] = &dynstrsec[dynsymsec[ELF64_R_SYM(relos[j].r_info)].st_name];
+						dynsyms[numdynsyms] = NULL;
+					}
+					else{
+						libdynsyms[k] = &dynstrsec[dynsymsec[ELF64_R_SYM(relos[j].r_info)].st_name];
 					};
+					break;
+				};
+			};
+		};
+	};
 
-					if(found && bin->text != -1){
-						//search for calls
-						int plt_start = bin->shdr[bin->plt].sh_addr;
-						int plt_end = plt_start + bin->shdr[bin->plt].sh_size;
-						int *plt_call = NULL;
-						int num_plt_calls = 0;
+	/* detect calls used in target functions from searching for them in the function's code */
+	if(bin->text != -1){
+		for(int i = 0; i < numdynsyms; i++){
+			long start = bin->shdr[bin->text].sh_addr;
+			long end = start;
+			int local = 0;
 
-						for(int x = start; x < end; x++){
-							int rel_addr = x-bin->shdr[bin->text].sh_addr;
-							if(bin->secs[bin->text][rel_addr] == (char)0xe8){
-								/* 0xe8 = call */
-								uint32_t maybe = (uint32_t)(x + *((int32_t *)&(bin->secs[bin->text][++rel_addr])) - 0xb); /* mitigation for: all are off by 0xb ??? */
-								if(maybe >= (uint32_t)plt_start && maybe <= (uint32_t)plt_end){
-									plt_call = realloc(plt_call, ++num_plt_calls * sizeof(int));
-									plt_call[num_plt_calls-1] = maybe;
-									x += 3;
-								};
-							};
-						};
+			for(int x = 0; x < (int)(bin->shdr[bin->dynsym].sh_size / bin->shdr[bin->dynsym].sh_entsize); x++){
+				if(!strcmp(dynsyms[i], &dynstrsec[dynsymsec[x].st_name])){
+					start = dynsymsec[x].st_value;
+					end = start + dynsymsec[x].st_size;
+					break;
+				};
+			};
 
-						if(plt_call != NULL){
-							for(int x = 0; x < num_plt_calls; x++){
-								//find got entry addr for plt entry
-								/* jmp a d d r <@plt>   <--- significant one
-								 * push v a l ue
-								 * jmp a d d r <@.text>
-								 */
-								uint8_t *plt = (uint8_t *)&(bin->secs[bin->plt][plt_call[x]-bin->shdr[bin->plt].sh_addr]);
-								if(((uint16_t *)plt)[0] == 0x25ff){
-									/* 0x25ff = jmp */
-									//get got entry
-									uint64_t *got = (uint64_t *)&(bin->secs[bin->got][(plt_call[x]+*((uint32_t *)&(plt[2])))-bin->shdr[bin->got].sh_addr+6]); /* mitigation for: all are off by 6 ??? */
-									got=got;
-								};
+			if(local){
+				continue;
+			};
 
-							};
-						};
+			for(long x = start; x < end; x++){
+				int rel_addr = x-bin->shdr[bin->text].sh_addr;
+				if(bin->secs[bin->text][rel_addr] == (char)0xe8){
+					/* 0xe8 = call */
+					uint32_t maybe = (uint32_t)(x + *((int32_t *)&(bin->secs[bin->text][++rel_addr])) - 0xb); /* mitigation for: all are off by 0xb ??? */
+					if(maybe >= libdynaddr[0] && maybe <= libdynaddr[libdynnum-1] && !(maybe % 16)){
+						libdynused[(maybe-libdynaddr[0])/16] = 1;
+						x += 3;
 					};
 				};
 			};
+		};
+	};
+
+	if(working != libdynaddr){
+		free(working);
+	};
+
+	/* allow syscalls for used functions */
+	if(libdynnum && libdynsyms != NULL && libdynaddr != NULL && libdynused != NULL){
+		char **temp = NULL;
+		int numtemp = 0;
+		
+		for(int i = 0; i < libdynnum; i++){
+			if(libdynused[i] && libdynsyms[i] != NULL){
+				temp = realloc(temp, ++numtemp * sizeof(char *));
+				if(temp == NULL){
+					log_error("realloc() failed (%s)", strerror(errno));
+					free(libdynsyms);
+					free(libdynused);
+					free(libdynaddr);
+					elf_free(bin);
+					return dynsyms;
+				};
+				temp[numtemp-1] = libdynsyms[i];
+			};
+		};
+
+		temp = realloc(temp, (numtemp + 1) * sizeof(char *));
+		if(temp == NULL){
+			log_error("realloc() failed (%s)", strerror(errno));
+			free(libdynsyms);
+			free(libdynused);
+			free(libdynaddr);
+			elf_free(bin);
+			return dynsyms;
+		};
+		temp[numtemp] = NULL;
+
+		free(libdynsyms);
+		free(libdynused);
+		free(libdynaddr);
+
+		libdynsyms = temp;
+		libdynnum = numtemp;
+
+		if(libdynsyms != NULL){
+			for(int n = 0; n < bin->numneeded; n++){
+				for(int m = 0; m < DYN_NUM_HANDLERS; m++){
+					if(!strcmp(bin->needed[n], dyn_handler[m].obj)){
+						libdynsyms = (*dyn_handler[m].handler)(libdynsyms);
+						break;
+					};
+				};
+			};
+
+			free(libdynsyms);
 		};
 	};
 
