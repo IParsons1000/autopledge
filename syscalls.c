@@ -24,6 +24,7 @@ void _syscalls_add(int syscall){
 		syscalls = malloc(++numsyscalls * sizeof(int));
 		if(syscalls == NULL){
 			log_error("malloc() failed (%s)", strerror(errno));
+			numsyscalls = 0;
 			return;
 		};
 		syscalls[0] = syscall;
@@ -46,6 +47,7 @@ void _syscalls_add(int syscall){
 			syscalls = realloc(syscalls, ++numsyscalls * sizeof(int));
 			if(syscalls == NULL){
 				log_error("realloc() failed (%s)", strerror(errno));
+				numsyscalls = 0;
 				return;
 			};
 
