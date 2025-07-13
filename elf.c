@@ -708,6 +708,10 @@ void elf_free(elf_t *elf){
 			free(elf->needed);
 		};
 
+		if(elf->relo != NULL){
+			free(elf->relo);
+		};
+
 		free(elf);
 	};
 
