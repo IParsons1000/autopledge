@@ -24,6 +24,11 @@ case $? in
   2)
     echo "[ERROR] test-elf: elf_get_dynsym failed (return NULL)" >> ${TESTLOG}
     ;;
+  159)
+    echo "[ERROR] test-elf: received SIGSYS (bad system call)" >> ${TESTLOG}
+    ;;
+  *)
+    echo "[ERROR] test-elf: unexpected return value ($?)" >> ${TESTLOG}
 esac
 
 if [ "$SUCCESS" -eq 0 ] ; then

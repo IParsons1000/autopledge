@@ -21,8 +21,11 @@ case $OUT in
   6)
     SUCCESS=1
     ;;
+  159)
+    echo "[ERROR] test-recursive: received SIGSYS (bad system call)" >> ${TESTLOG}
+    ;;
   *)
-    echo "[ERROR] test-recursive: failed" >> ${TESTLOG}
+    echo "[ERROR] test-recursive: returned unexpected value ($OUT)" >> ${TESTLOG}
     ;;
 esac
 

@@ -54,13 +54,13 @@ for i in cg.copy().nodes:
 with open(ofile, 'w') as f:
 
 	# find syscalls required for all outward-facing so functions
-	for s in tqdm.tqdm(list(set(list(p.loader.symbols)))):
+	for s in tqdm.tqdm(list(p.loader.symbols)):
 
-		if s.is_function and not s.is_local and cfg.functions.function(name=s.name):
+		if s.is_function and not s.is_local and cfg.functions.function(s.rebased_addr):
 
 			# create subgraph from function
 			try:
-				sg = cg.subgraph(networkx.single_source_shortest_path(cg, cfg.functions.function(name=s.name).addr).keys());
+				sg = cg.subgraph(networkx.single_source_shortest_path(cg, cfg.functions.function(s.rebased_addr).addr).keys());
 
 				# locate nodes at the end of the line
 				calls = [];
