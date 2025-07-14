@@ -18,6 +18,7 @@ $(TESTDIR)/poc-overflow/poc-overflow: $(TESTDIR)/poc-overflow/poc-overflow.c
 
 poc-overflow-clean:
 	-rm -f $(TESTDIR)/poc-overflow/poc-overflow
+	-rm -f $(TESTDIR)/poc-overflow/shellcode.bin
 
 poc-overflow-spotless: poc-overflow-clean
 	-rm -f $(TESTDIR)/poc-overflow/poc-overflow.log

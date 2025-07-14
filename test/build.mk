@@ -8,8 +8,10 @@ TESTFILE ?= $(TESTDIR)/test-results
 
 # individual test names
 TESTS := $(shell find test -maxdepth 1 -type d -path "test/test-*" | sed 's|^test/||')
-TESTS-CLEAN := $(addsuffix -clean,$(TESTS))
-TESTS-SPOTLESS := $(addsuffix -spotless,$(TESTS))
+POCS := $(shell find test -maxdepth 1 -type d -path "test/poc-*" | sed 's|^test/||')
+ALLTEST := $(TESTS) $(POCS)
+TESTS-CLEAN := $(addsuffix -clean,$(ALLTEST))
+TESTS-SPOTLESS := $(addsuffix -spotless,$(ALLTEST))
 
 # individual test build files (provides test-* and poc-*)
 include test/*/build.mk

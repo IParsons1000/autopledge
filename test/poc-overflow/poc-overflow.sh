@@ -12,17 +12,30 @@ SUCCESS=0
 
 echo "[INFO]  poc-overflow: starting" >> ${TESTLOG}
 
-setarch -R env -i AUTOPLEDGE=$AUTOPLEDGE $CURRDIR/poc-overflow < $CURRDIR/shellcode.bin
+setarch -R env -i LD_PRELOAD=bananas $CURRDIR/poc-overflow < $CURRDIR/shellcode.bin
+
+UNPROT=$?
+
+setarch -R env -i LD_PRELOAD=$AUTOPLEDGE $CURRDIR/poc-overflow < $CURRDIR/shellcode.bin
 
 case $? in
   0)
-    SUCCESS=1
+    if [ "$UNPROT" -ne 1 ] ; then
+      echo "[ERROR] poc-overflow: shellcode is not functional without protection" >> ${TESTLOG}
+    else
+      SUCCESS=1
+    fi
     ;;
   1)
-    echo "[ERROR] poc-overflow: shellcode was successful" >> ${TESTLOG} 
+    echo "[ERROR] poc-overflow: shellcode was successful (returned 1)" >> ${TESTLOG} 
     ;;
   *)
-    echo "[ERROR] poc-overflow: unexpected return value ($?)" >> ${TESTLOG}
+    if [ "$UNPROT" -ne 1 ] ; then
+      echo "[ERROR] poc-overflow: shellcode is not functional without protection" >> ${TESTLOG}
+    else
+      echo "[ERROR] poc-overflow: unexpected return value ($?)" >> ${TESTLOG}
+    fi
+    ;;
 esac
 
 if [ "$SUCCESS" -eq 0 ] ; then

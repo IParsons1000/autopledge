@@ -4,7 +4,7 @@
 #
 
 # custom config
-AUTOPLEDGE ?= libautopledge.so
+AUTOPLEDGE ?= ./libautopledge.so
 TOP ?= $(PWD)
 PREFIX ?= /usr
 LIBDIR ?= $(PREFIX)/lib64
