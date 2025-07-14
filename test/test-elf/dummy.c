@@ -1,7 +1,7 @@
 /*
  *
  * (c)2025 Ira Parsons
- * autopledge test suite - dummy sample program
+ * autopledge test suite - test-elf dummy sample program
  *
  */
 

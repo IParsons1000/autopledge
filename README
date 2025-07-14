@@ -72,6 +72,10 @@ If you plan on utilizing the optional build tools, you will also need:
 
 > - **python** (>=3.10)
 
+The proof-of-concept exploit preventions require:
+
+> - **nasm**
+
 **Note:** autopledge in its current form will only work on x86_64, because the
 arch-specific relocation constants are hardcoded.  This is easily fixed with
 some ifdefs, but that's still on the todo list.  Furthermore, autopledge does
