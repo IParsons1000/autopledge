@@ -47,7 +47,9 @@ shellcode injection exploit which autopledge prevents from succeeding.  In this
 case, a buffer overflow results in a vulnerability by which an attacker can
 run any program.  By whitelisting the expected system calls of the program,
 autopledge prevents the attacker from launching other programs (with `fork` or
-`execve`) like a shell.
+`execve`) like a shell.  **Make sure to run this with `make poc-overflow`!  The
+process is dependent on the environmental variables and shared library paths
+set by the Makefile.**
 
 [^interp]: autopledge is designed with the use case of proprietary and/or fixed version
 binaries.  In the case of an interpreted program, the interpreter itself can
