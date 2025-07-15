@@ -27,16 +27,18 @@ If the process executes an unexpected system call during runtime (for example
 the `execve` of a shell spawn), the linux kernel kills the process to prevent
 potentially injected code from harming the system.
 
-### What autopledge Can Do
+#### What autopledge Can Do
 
  - Restrict arbitrary code execution
  - Detect expected system calls in most x86_64 linux binaries
  - Traverse and analyze shared libraries linked to a program
+ - Add an extra layer of security to vulnerable, legacy applications
 
-### What autopledge Cannot Do
+#### What autopledge Cannot Do
 
  - Prevent shellcode injection
  - Detect all possible system calls a program could make
+ - Stop all exploitation and malicious attacks
  - Effectively protect interpreted programs*
 
 *autopledge is designed with the use case of proprietary and/or fixed version
