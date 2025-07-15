@@ -29,7 +29,7 @@ potentially injected code from harming the system.
 
 #### What autopledge Can Do
 
- - Restrict arbitrary code execution
+ - Restrict arbitrary code execution[^poc]
  - Detect expected system calls in most x86_64 linux binaries
  - Traverse and analyze shared libraries linked to a program
  - Add an extra layer of security to vulnerable, legacy applications
@@ -39,22 +39,22 @@ potentially injected code from harming the system.
  - Prevent shellcode injection
  - Detect all possible system calls a program could make
  - Stop all exploitation and malicious attacks
- - Effectively protect interpreted programs[^*]
+ - Effectively protect interpreted programs[^interp]
 
-[^*]: autopledge is designed with the use case of proprietary and/or fixed version
-binaries.  In the case of an interpreted program, the interpreter itself can
-be expected to require a vast amount of permissions, any subset of which the
-interpreted program may need for itself.  Additionally, interpreted programs
-may be modified to eliminate bugs much more readily than programs distributed
-as binaries.
-
-**NOTE:** For a good example of what autopledge is good for, check out the
+[^poc]: For a good example of what autopledge is good for, check out the
 `test/poc-overflow` folder, which contains an example vulnerable program and
 shellcode injection exploit which autopledge prevents from succeeding.  In this
 case, a buffer overflow results in a vulnerability by which an attacker can
 run any program.  By whitelisting the expected system calls of the program,
 autopledge prevents the attacker from launching other programs (with `fork` or
 `execve`) like a shell.
+
+[^interp]: autopledge is designed with the use case of proprietary and/or fixed version
+binaries.  In the case of an interpreted program, the interpreter itself can
+be expected to require a vast amount of permissions, any subset of which the
+interpreted program may need for itself.  Additionally, interpreted programs
+may be modified to eliminate bugs much more readily than programs distributed
+as binaries.
 
 Why?
 ----
