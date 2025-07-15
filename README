@@ -91,7 +91,7 @@ How?
 
 ### Dependencies
 
-autopledge requires the following to build and run successfully:
+autopledge requires the following to build and run successfully[^arch]:
 
 > - **cc** (tested on **gcc** and **clang**)
 > - **glibc**
@@ -106,7 +106,7 @@ The proof-of-concept exploit preventions require:
 
 > - **nasm**
 
-**Note:** autopledge in its current form will only work on x86_64, because the
+[^arch]: autopledge in its current form will only work on x86_64, because the
 arch-specific relocation constants are hardcoded.  This is easily fixed with
 some ifdefs, but that's still on the todo list.  Furthermore, autopledge does
 not as of yet parse the default library search paths, so any unrecognized
