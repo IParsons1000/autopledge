@@ -24,8 +24,35 @@ program makes to dynamically linked libraries, before being restricted with
 linux's built-in seccomp(2) facilities.
 
 If the process executes an unexpected system call during runtime (for example
-the `execve` of a shell spawn), the process is killed to prevent potentially
-injected code from harming the system.
+the `execve` of a shell spawn), the linux kernel kills the process to prevent
+potentially injected code from harming the system.
+
+### What autopledge Can Do
+
+ - Restrict arbitrary code execution
+ - Detect expected system calls in most x86_64 linux binaries
+ - Traverse and analyze shared libraries linked to a program
+
+### What autopledge Cannot Do
+
+ - Prevent shellcode injection
+ - Detect all possible system calls a program could make
+ - Effectively protect interpreted programs*
+
+*autopledge is designed with the use case of proprietary and/or fixed version
+binaries.  In the case of an interpreted program, the interpreter itself can
+be expected to require a vast amount of permissions, any subset of which the
+interpreted program may need for itself.  Additionally, interpreted programs
+may be modified to eliminate bugs much more readily than programs distributed
+as binaries.
+
+**NOTE:** For a good example of what autopledge is good for, check out the
+`test/poc-overflow` folder, which contains an example vulnerable program and
+shellcode injection exploit which autopledge prevents from succeeding.  In this
+case, a buffer overflow results in a vulnerability by which an attacker can
+run any program.  By whitelisting the expected system calls of the program,
+autopledge prevents the attacker from launching other programs (with `fork` or
+`execve`) like a shell.
 
 Why?
 ----
@@ -66,6 +93,7 @@ autopledge requires the following to build and run successfully:
 
 > - **cc** (tested on **gcc** and **clang**)
 > - **glibc**
+> - **libstdc++**
 > - **linux** (>=3.17)
 
 If you plan on utilizing the optional build tools, you will also need:
@@ -84,8 +112,8 @@ dynamically-linked libaries must be in the working directory at runtime.
 
 ### Building
 
-To run the _optional_ build tools and customize the list of glibc syscalls by
-function to your system, run:
+To run the _optional_ build tools and customize the list of glibc and libstdc++
+syscalls by function to your system, run:
 
 ```console
 $ make tools
