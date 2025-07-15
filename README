@@ -39,9 +39,9 @@ potentially injected code from harming the system.
  - Prevent shellcode injection
  - Detect all possible system calls a program could make
  - Stop all exploitation and malicious attacks
- - Effectively protect interpreted programs[*]
+ - Effectively protect interpreted programs[^*]
 
-[*]: autopledge is designed with the use case of proprietary and/or fixed version
+[^*]: autopledge is designed with the use case of proprietary and/or fixed version
 binaries.  In the case of an interpreted program, the interpreter itself can
 be expected to require a vast amount of permissions, any subset of which the
 interpreted program may need for itself.  Additionally, interpreted programs
