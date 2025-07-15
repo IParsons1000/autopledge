@@ -14,7 +14,7 @@ SUCCESS=0
 
 echo "[INFO]  poc-llama: starting" >> ${TESTLOG}
 
-SHELLCODE="abc 1 2 3"
+SHELLCODE=`cat $CURRDIR/shellcode.bin`
 
 cd $(CURRDIR)/llama.cpp
 build/bin/llama-server -hf ggml-org/gemma-3-1b-it-GGUF &
