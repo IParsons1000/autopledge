@@ -51,12 +51,14 @@ for i in cg.copy().nodes:
 	if nofail.match(cfg.functions.function(i).name):
 		cg.remove_node(i);
 
+old = "";
+
 with open(ofile, 'w') as f:
 
 	# find syscalls required for all outward-facing so functions
 	for s in tqdm.tqdm(list(p.loader.symbols)):
 
-		if s.is_function and not s.is_local and cfg.functions.function(s.rebased_addr):
+		if s.is_function and not s.is_local and cfg.functions.function(s.rebased_addr) and s.name.split("@")[0] != old:
 
 			# create subgraph from function
 			try:
@@ -73,10 +75,16 @@ with open(ofile, 'w') as f:
 				for i, call in enumerate(calls):
 					calls[i] = "SYS_" + call;
 
+				# correct for gets failure in poc-overflow
+				if s.name == "gets":
+					calls.append("SYS_fstat");
+
 				# format for header file insertion
 				arrent = "{  \"" + s.name.split("@")[0] + "\" , (int *)&(int []){ " + ", ".join(calls) + ", -1 } },";
 
 				if calls: print(arrent, file=f);
+
+				old = s.name.split("@")[0];
 			except:
 				continue;
 

@@ -12,10 +12,12 @@
 #include <unistd.h>
 #include "elf.h"
 #include "glibc.h"
+#include "glibcxx.h"
 #include "log.h"
 
 dyn_handler_t dyn_handler[DYN_NUM_HANDLERS] = {
-	{ "libc.so.6", &glibc_get_syscalls }
+	{ "libc.so.6", &glibc_get_syscalls },
+	{ "libstdc++.so.6", &glibcxx_get_syscalls }
 };
 
 elf_t *elf_load(char *file);

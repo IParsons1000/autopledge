@@ -38,7 +38,7 @@ typedef struct dyn_handler_s {
 	char **(*handler)(char **);
 } dyn_handler_t;
 
-#define DYN_NUM_HANDLERS 1
+#define DYN_NUM_HANDLERS 2
 
 elf_t *elf_load(char *file);
 char **elf_get_dynsym(elf_t *elf);

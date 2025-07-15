@@ -33,8 +33,8 @@ CFLAGS += $(COPTS)
 
 all: $(AUTOPLEDGE)
 
-$(AUTOPLEDGE): autopledge.o elf.o syscalls.o seccomp.o glibc.o
-	$(CC) $(CFLAGS) -shared -o $(AUTOPLEDGE) autopledge.o elf.o syscalls.o seccomp.o glibc.o
+$(AUTOPLEDGE): autopledge.o elf.o syscalls.o seccomp.o glibc.o glibcxx.o
+	$(CC) $(CFLAGS) -shared -o $(AUTOPLEDGE) autopledge.o elf.o syscalls.o seccomp.o glibc.o glibcxx.o
 
 autopledge.o: autopledge.c
 	$(CC) $(CFLAGS) -c autopledge.c
@@ -50,6 +50,9 @@ seccomp.o: seccomp.c
 
 glibc.o: glibc.c
 	$(CC) $(CFLAGS) -c glibc.c
+
+glibcxx.o: glibcxx.c
+	$(CC) $(CFLAGS) -c glibcxx.c
 
 # module build files (provides `*-all', `*-clean', and `*-spotless')
 include test/build.mk
