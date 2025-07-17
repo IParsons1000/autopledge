@@ -17,7 +17,7 @@
 #include "log.h"
 
 #define NAME "autopledge"
-#define VERSION 0.1f
+#define VERSION 1.0f
 
 __attribute__ ((constructor)) void autopledge(void){
 
