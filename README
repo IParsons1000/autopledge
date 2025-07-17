@@ -41,7 +41,7 @@ potentially injected code from harming the system.
  - Detect all possible system calls a program could make
  - Stop all exploitation and malicious attacks
  - Effectively protect interpreted programs[^interp]
- - Detect direct system calls without wrappers
+ - Allow direct system calls without wrappers in the original program
 
 [^poc]: For a good example of what autopledge is good for, check out the
 `test/poc-overflow` folder, which contains an example vulnerable program and
