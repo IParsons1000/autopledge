@@ -1,0 +1,27 @@
+name: Makefile CI
+
+on:
+  push:
+    branches: [ "actions-test" ]
+  pull_request:
+    branches: [ "actions-test" ]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Install build dependencies
+      run: sudo apt-get install build-essential python3 nasm
+
+    - name: Build tools
+      run: make tools
+
+    - name: Build autopledge
+      run: make all
+
+    - name: Run tests
+      run: make test
