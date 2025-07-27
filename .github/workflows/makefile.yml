@@ -2,9 +2,9 @@ name: Makefile CI
 
 on:
   push:
-    branches: [ "actions-test" ]
+    branches: [ "master" ]
   pull_request:
-    branches: [ "actions-test" ]
+    branches: [ "master" ]
 
 jobs:
   build:
