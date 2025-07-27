@@ -21,11 +21,11 @@ so-get-syscalls: $(TOOLDIR)/so-get-syscalls.py
 
 glibc-get-syscalls: so-get-syscalls
 	. $(TOOLDIR)/angr/bin/activate && \
-	$(TOOLDIR)/so-get-syscalls.py $(shell find / -regex '.*libc.so.6$' -print -quit 2>/dev/null) $(TOOLDIR)/glibc-syscalls-per-function
+	$(TOOLDIR)/so-get-syscalls.py $(shell find / -regex '.*libc.so.6$$' -print -quit 2>/dev/null) $(TOOLDIR)/glibc-syscalls-per-function
 
 glibcxx-get-syscalls: so-get-syscalls
 	. $(TOOLDIR)/angr/bin/activate && \
-	$(TOOLDIR)/so-get-syscalls.py $(shell find / -regex '.*libstdc\+\+.so.6$' -print -quit 2>/dev/null) $(TOOLDIR)/glibcxx-syscalls-per-function
+	$(TOOLDIR)/so-get-syscalls.py $(shell find / -regex '.*libstdc\+\+.so.6$$' -print -quit 2>/dev/null) $(TOOLDIR)/glibcxx-syscalls-per-function
 
 tools-clean: $(TOOLS-CLEAN)
 
